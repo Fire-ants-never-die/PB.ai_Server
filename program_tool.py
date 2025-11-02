@@ -33,7 +33,7 @@ class DateTimeManager():
     #return formatted_today - date 
     def get_past_time(self,date:int) -> str:
         past_time = self.now - datetime.timedelta(days=date)
-        formatted_past_time = self.now.strftime("Y%m%d")
+        formatted_past_time = past_time.strftime("%Y%m%d")
         return formatted_past_time
 
 
@@ -62,3 +62,11 @@ class LoadingDebugger(Debuger):
             self.progress += 0.1
     def __del__(self):
             super().printd(f"{self.name} 완료")
+
+
+def test():
+    dm = DateTimeManager()
+    print(dm.get_past_time(2))
+
+if __name__ == "__main__":
+    test()

@@ -7,6 +7,8 @@ import OpenDartReader
 import openpyxl
 import pyarrow
 
+from pykrx import stock,bond
+
 @singleton
 class ReportCrawler():
 
@@ -46,24 +48,56 @@ class ReportCrawler():
 
 #인터넷을 사용해서 긁어올 기업정보가 있을때 사용하는 클래스입니다.
 @singleton
-class CompanyInfoCrawler():
-    
-    def __init__(self) -> None:
-        self.reportCrawler = ReportCrawler()
+class KRXCrawler():
+    #상장법인리스트 url
+    #url = "http://kind.krx.co.kr/corpgeneral/corpList.do?method=download"
 
-    def crawl_company_list(self):
-        print("hi")
-        pass
+    def __init__(self) -> None:
+        self.date_time_manager = DateTimeManager()
+
+    def crawl_stock_list(self,date : str = ""):
+        if date == "":
+            date = self.date_time_manager.formatted_today
+        #kospi(유가)
+        tickers_kospi = stock.get_market_ticker_list(date,market="KOSPI")
+        tickers_kosdaq = stock.get_market_ticker_list(date,market="KOSDAQ")
+        tickers_konex = stock.get_market_ticker_list(date,market="KONEX")
+        
+        kospi_list_dict = {"ticker":[],"name":[]}
+        kosdaq_list_dict = {"ticker":[],"name":[]}
+        konex_list_dict = {"ticker":[],"name":[]}
+
+        for ticker in tickers_kospi:
+            name = stock.get_market_ticker_name(ticker)
+            kospi_list_dict["ticker"].append(ticker)
+            kospi_list_dict["name"].append(name)
+
+        for ticker in tickers_kosdaq:
+            name = stock.get_market_ticker_name(ticker)
+            kosdaq_list_dict["ticker"].append(ticker)
+            kosdaq_list_dict["name"].append(name)
+
+        for ticker in tickers_konex:
+            name = stock.get_market_ticker_name(ticker)
+            konex_list_dict["ticker"].append(ticker)
+            konex_list_dict["name"].append(name)
+        
+        self.kospi_df = pd.DataFrame(kospi_list_dict)
+        self.kosdaq_df = pd.DataFrame(kosdaq_list_dict)
+        self.konex_df = pd.DataFrame(konex_list_dict)
+
+        self.kospi_df.set_index("name")
 
 def debug():
     reportCrawler =ReportCrawler()
 
     test_list = ["005930","000660","373220","207940"]
     
-    company_info_crawler = CompanyInfoCrawler()
+    company_info_crawler = KRXCrawler()
 
-    company_info_crawler.crawl_company_list()
-
+    company_info_crawler.crawl_stock_list()
+    print(company_info_crawler.kospi_df)
+    print(company_info_crawler.kosdaq_df)
 
 
 if __name__ == "__main__":
