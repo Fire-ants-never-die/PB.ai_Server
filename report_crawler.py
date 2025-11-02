@@ -43,7 +43,16 @@ class ReportCrawler():
 
             #정리해서 다시 엑셀파일저 저장 추후에 기능분리할 것
             finstate.to_excel(excel_writer = f'testdata/{stock}.xlsx')
+    
+    def extract_items(self,df:pd.DataFrame):
+        pass
 
+    def test(self):
+        df = self.dart.xbrl_taxonomy('BS1')
+        DataController().save_df_excel(df,"개정과목체계",True)
+        
+        
+        # print(list[0])
 
 
 #인터넷을 사용해서 긁어올 기업정보가 있을때 사용하는 클래스입니다.
@@ -91,13 +100,12 @@ class KRXCrawler():
 def debug():
     reportCrawler =ReportCrawler()
 
-    test_list = ["005930","000660","373220","207940"]
+    # test_list = ["005930","000660","373220","207940"]
     
-    company_info_crawler = KRXCrawler()
+    #reportCrawler.crawl_finstate_year(test_list,2021)
+    reportCrawler.test()
 
-    company_info_crawler.crawl_stock_list()
-    print(company_info_crawler.kospi_df)
-    print(company_info_crawler.kosdaq_df)
+
 
 
 if __name__ == "__main__":
