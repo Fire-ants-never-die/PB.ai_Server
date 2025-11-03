@@ -15,17 +15,16 @@ class ReportCrawler():
     def __init__(self):
         #api key등이 담긴 data/meta.json 
         meta_data = DataController().get_meta_data()
+
+        #api key
         self.api_key = meta_data["api_key"]
+
+        #크롤링한 재무제표/연결제무제표 +@ 에서 추출할 항목들
+        self.Required_name = meta_data["Required_name"] #이름으로 추출
+        self.Required_id = meta_data["Required_id"] #개정과목체계에 따른 id로 추출
 
         #OpenDartReader class
         self.dart = OpenDartReader(self.api_key) # type: ignore
-
-        #test : dataframe   
-        # 당좌자산이랑 차입급이자급부채는 파싱하는 거 아님. 
-        # 비율항목 계산할 것 (기능사항 요구 명세서 선택데이터)
-        # 재무상태표 < 연결재무상대표, 손익계산서 < 포괄손익계산서(연결손익계산서) (테이블 따로)
-        #재무상태표에서 재고자산항목의 하위항목(상품,제품)은 없을 가능성도 있는데 이때 null처리 할 것.
-        # 회사 - 1.연도별 필수데이터 / 2.연도별 선택데이터 
 
 
 
@@ -33,26 +32,52 @@ class ReportCrawler():
         # print(test.columns)
         #test.to_excel(excel_writer = 'testdata/sk_test.xlsx')
         #test.to_feather('testdata/test.feather')
-    
+
     # "stock_list" items must be uniform as either ticker or name
     #  ticker
     def crawl_finstate_year(self,stock_list: list, year : int):
         for stock in stock_list:
-            finstate = self.dart.finstate_all(stock,year)
-            finstate.to_feather(f'data/{year}{stock}.feather')
+            fdata = self.dart.finstate_all(stock,year)
+            DataController().save_df_feather(fdata,f"data/raw/finstate/{year}{stock}Y")
 
-            #정리해서 다시 엑셀파일저 저장 추후에 기능분리할 것
-            finstate.to_excel(excel_writer = f'testdata/{stock}.xlsx')
+            #정리해서 다시 엑셀파일에 저장. 추후에 기능분리할 것
+            #fdata.to_excel(excel_writer = f'testdata/{stock}.xlsx')
     
-    def extract_items(self,df:pd.DataFrame):
-        pass
-
+    #크롤링한 재무제표로부터 meta.json의 회계항목들 파싱 -> data/year/005930Y.feather
+    #feather파일 이름명 규칙 : 사업보고서(1년)은 ticker뒤에 Y 붙이고, 반기는 H, 분기는 Q1,Q2...이런식으로 
+    #ftype : Y / H / Q1 / Q2 / Q3 /Q4
+    def extract_items(self,df:pd.DataFrame,ticker:str,year:int,ftype:str):
+        #추출 성공 항목
+        items = {}
+        #추출실패 항목
+        failed_items = []
+        #값이 여러개 있는 경우 (검수 필요)
+        strange_items = []
+        #name으로 먼저 추출 시도
+        for i in range(len(self.Required_name)):
+            name = self.Required_name[i]
+            #당기 파싱 (thstrm_amount)
+            amount = df.loc[(df['sj_nm']=="재무상태표")&(df['account_nm']==name),'thstrm_amount'].to_list() # type: ignore
+            if len(amount) == 1:
+                items[name] = amount[0]
+            elif len(amount) > 2 :
+                strange_items.append(name)
+                items[name] = None
+            else:
+                failed_items.append(name)
+                items[name] = None 
+        res = pd.DataFrame(items,index=[0])
+        DataController().save_df_feather(res,f"data/{year}/{ticker}{ftype}")
+        
     def test(self):
-        df = self.dart.xbrl_taxonomy('BS1')
-        DataController().save_df_excel(df,"개정과목체계",True)
+        self.crawl_finstate_year(["005930"],2024)
+        raw_df = DataController().get_raw_finstate_data("005930",2024,'Y')
+        self.extract_items(raw_df,"005930",2024,'Y')
+        df = DataController().get_finstate_data("005930",2024,'Y')
+        print(df)
+
+        return
         
-        
-        # print(list[0])
 
 
 #인터넷을 사용해서 긁어올 기업정보가 있을때 사용하는 클래스입니다.
@@ -100,9 +125,8 @@ class KRXCrawler():
 def debug():
     reportCrawler =ReportCrawler()
 
-    # test_list = ["005930","000660","373220","207940"]
-    
-    #reportCrawler.crawl_finstate_year(test_list,2021)
+    test_list = ["005930","000660","373220","207940"]
+
     reportCrawler.test()
 
 

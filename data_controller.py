@@ -7,9 +7,6 @@ from program_tool import *
 @singleton
 class DataController:
 
-    save_dir = "data/"   
-    test_dir = "testdata/"
-
     @staticmethod
     def get_meta_data() ->dict:
         current_dir = os.path.dirname(__file__)
@@ -19,24 +16,39 @@ class DataController:
         return meta_data
     
     @staticmethod
-    def save_df_excel(df:pd.DataFrame, name : str,istest:bool = False):
-        if istest == True:
-            #for test
-            df.to_excel(excel_writer = DataController().test_dir +f'{name}.xlsx')
-        else:
-            df.to_excel(excel_writer = DataController().save_dir +f'{name}.xlsx')
+    def save_df_excel(df:pd.DataFrame, name : str):
+        df.to_excel(excel_writer = f'{name}.xlsx')
+
     
     @staticmethod
-    def save_df_feather(df:pd.DataFrame, name : str, istest:bool = False):
-        if istest == True:
-            #for test
-            df.to_feather(DataController().test_dir +f'{name}.feather')
-        else:
-            df.to_excel(DataController().save_dir +f'{name}.feather')
+    def save_df_feather(df:pd.DataFrame, name : str):
+        df.to_feather(f'{name}.feather')
+
  
     @staticmethod
-    def read_feather(name : str, istest:bool = False) ->pd.DataFrame:
-        if istest == True:
-            return pd.read_feather(DataController().test_dir +f'{name}.feather')
-        else:
-            return pd.read_feather(DataController().save_dir +f'{name}.feather')
+    #ftype : Y(사업보고서), H(반기), Q1 (1분기)
+    def get_finstate_data(ticker: str, year:int, ftype : str) ->pd.DataFrame:
+        path = f"data/{year}/{ticker}{ftype}.feather"
+
+        try:
+            res = pd.read_feather(path)
+        except FileNotFoundError:
+            print(f"{ticker}경로 찾기 에러")
+
+        except Exception as e:
+            print(f"{ticker}데이터를 불러오는 중 에러 발생 :",e)
+        return res
+    
+    @staticmethod
+    #ftype : Y(사업보고서), H(반기), Q1 (1분기)
+    def get_raw_finstate_data(ticker: str, year:int, ftype : str) ->pd.DataFrame:
+        path = f"data/raw/finstate/{year}{ticker}{ftype}.feather"
+
+        try:
+            res = pd.read_feather(path)
+        except FileNotFoundError:
+            print(f"{ticker}경로 찾기 에러")
+
+        except Exception as e:
+            print(f"{ticker}데이터를 불러오는 중 에러 발생 :",e)
+        return res
