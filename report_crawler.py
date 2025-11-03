@@ -26,8 +26,6 @@ class ReportCrawler():
         #OpenDartReader class
         self.dart = OpenDartReader(self.api_key) # type: ignore
 
-
-
         #test = self.dart.finstate_all('농심', 2021)
         # print(test.columns)
         #test.to_excel(excel_writer = 'testdata/sk_test.xlsx')
