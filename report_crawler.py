@@ -36,7 +36,7 @@ class ReportCrawler():
     def crawl_finstate_year(self,stock_list: list, year : int):
         for stock in stock_list:
             fdata = self.dart.finstate_all(stock,year)
-            DataController().save_df_feather(fdata,f"data/raw/finstate/{year}{stock}Y")
+            DataController().save_df_feather(fdata,year,f"{stock}Y",True)
 
             #정리해서 다시 엑셀파일에 저장. 추후에 기능분리할 것
             #fdata.to_excel(excel_writer = f'testdata/{stock}.xlsx')
@@ -65,13 +65,14 @@ class ReportCrawler():
                 failed_items.append(name)
                 items[name] = None 
         res = pd.DataFrame(items,index=[0])
-        DataController().save_df_feather(res,f"data/{year}/{ticker}{ftype}")
+        DataController().save_df_feather(res,year,f"{ticker}{ftype}",False)
         
     def test(self):
         self.crawl_finstate_year(["005930"],2024)
         raw_df = DataController().get_raw_finstate_data("005930",2024,'Y')
         self.extract_items(raw_df,"005930",2024,'Y')
         df = DataController().get_finstate_data("005930",2024,'Y')
+        df.to_excel("testdata/test.xlsx")
         print(df)
 
         return

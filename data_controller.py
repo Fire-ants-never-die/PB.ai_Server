@@ -21,8 +21,19 @@ class DataController:
 
     
     @staticmethod
-    def save_df_feather(df:pd.DataFrame, name : str):
-        df.to_feather(f'{name}.feather')
+    def save_df_feather(df:pd.DataFrame, year:int,name: str,is_raw:bool = True):
+        current_dir = os.path.dirname(__file__)
+        path = "data/"
+        if is_raw:
+            path += f"raw/{year}"
+        else:
+            path += f"{year}"
+        path = os.path.join(current_dir,path)
+        #path 존재 확인
+        os.makedirs(path,exist_ok=True)
+        path = os.path.join(path,f'{name}.feather')
+        df.to_feather(path)
+
 
  
     @staticmethod
