@@ -1,7 +1,7 @@
 {
     "api_key" : "f2705b18ae2074695ae017f4daf9ca085455da31",
 
-    "Required_name" : 
+    "balance_name" : 
     [
         "유동자산","현금및현금성자산","매출채권","재고자산",
         "비유동자산","유형자산","건설중인자산","무형자산",
@@ -10,12 +10,23 @@
         "부채총계","자본총계","지배기업 소유주지분","당좌자산",
         "차입금(이자지급부채)"
     ],
-    "Required_id":
+    "balance_id":
     [
         "ifrs_CurrentAssets","ifrs_CashAndCashEquivalents","dart_ShortTermTradeReceivable","ifrs_Inventories",
         "ifrs_NoncurrentAssets","ifrs_PropertyPlantAndEquipment","dart_ConstructionInProgressGross","ifrs_IntangibleAssetsOtherThanGoodwill",
         "ifrs_Assets","ifrs_CurrentLiabilities","ifrs_ShorttermBorrowings",".",
         "ifrs_NoncurrentLiabilities","dart_BondsIssued","dart_LongTermBorrowingsGross","dart_CurentPortionOfFinanceLeaseLiabilities",
         "ifrs_Liabilities","ifrs_Equity","ifrs-full_EquityAttributableToOwnersOfParent"
+    ],
+    "income_name":
+    [
+        "매출액","매출총이익","영업이익","이자수익",
+        "이자비용","법인세비용차감전순이익","당기순이익","당기순이익_지배기업지분",
+        "매출원가","판매비와관리비"
+    ],
+    "income_id":
+    [
+
     ]
+
 }

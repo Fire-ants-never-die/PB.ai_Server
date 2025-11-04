@@ -20,8 +20,9 @@ class ReportCrawler():
         self.api_key = meta_data["api_key"]
 
         #크롤링한 재무제표/연결제무제표 +@ 에서 추출할 항목들
-        self.Required_name = meta_data["Required_name"] #이름으로 추출
-        self.Required_id = meta_data["Required_id"] #개정과목체계에 따른 id로 추출
+        self.balance_name = meta_data["balance_name"] #이름으로 추출
+        self.income_name = meta_data["income_name"]
+        self.balance_id = meta_data["balance_id"] #개정과목체계에 따른 id로 추출
 
         #OpenDartReader class
         self.dart = OpenDartReader(self.api_key) # type: ignore
@@ -44,29 +45,51 @@ class ReportCrawler():
     #ftype : Y / H / Q1 / Q2 / Q3 /Q4
     def extract_items(self,df:pd.DataFrame,ticker:str,year:int,ftype:str):
         #추출 성공 항목
-        items = {}
+        data = []
         #추출실패 항목
         failed_items = []
         #값이 여러개 있는 경우 (검수 필요)
         strange_items = []
         #name으로 먼저 추출 시도
-        for i in range(len(self.Required_name)):
-            name = self.Required_name[i]
+        for i in range(len(self.balance_name)):
+            item = {}
+            item["종류"] = "재무상태표"
+            name = self.balance_name[i]
             #당기 파싱 (thstrm_amount)
-            amount = df.loc[(df['sj_nm']=="재무상태표")&(df['account_nm']==name),'thstrm_amount'].to_list() # type: ignore
-            if len(amount) == 1:
-                items[name] = amount[0]
-            elif len(amount) > 2 :
+            amount_balance = df.loc[(df['sj_nm']=="재무상태표")&(df['account_nm']==name),'thstrm_amount'].to_list() # type: ignore
+            if len(amount_balance) == 1:
+                item[name] = amount_balance[0]
+            elif len(amount_balance) > 2 :
                 strange_items.append(name)
-                items[name] = None
+                item[name] = None
             else:
                 failed_items.append(name)
-                items[name] = None 
-        res_df = pd.DataFrame(items,index=[0])
+                item[name] = None
+            data.append(item)
+        for i in range(len(self.income_name)):
+            item = {}
+            item["종류"] = "손익계산서"
+            name = self.income_name[i]
+            amount_income = df.loc[(df['sj_nm']=="손익계산서")&(df['account_nm']==name),'thstrm_amount'].to_list() # type: ignore
+            if len(amount_income) == 1:
+                item[name] = amount_income[0]
+            elif len(amount_income) > 2 :
+                strange_items.append(name)
+                item[name] = None
+            else:
+                failed_items.append(name)
+                item[name] = None
+            data.append(item)
+
+
+        res_df = pd.DataFrame(data)
+        #for debug
+        res_df.to_excel(excel_writer="testdata/testresult.xlsx")
         DataController().save_df_feather(res_df,year,f"{ticker}{ftype}",False)
     
-    #DB001  O(n^2)
-    def parse_five_year_finstate_data(self,tickerlist:list):
+    #DB001, DB002  O(n^2)
+    #balance 와 income은 각각 재무상태표,손익계산서를 파싱할지 안할지를 체크하는 bool 변수입니다.
+    def parse_5year_data(self,tickerlist:list,balance= True,income = True):
         current_year = self.datetime.year
         for dy in range(1,6):
             target_year = current_year - dy
@@ -78,10 +101,9 @@ class ReportCrawler():
                 if raw_df.empty:
                     continue
                 self.extract_items(raw_df,ticker,target_year,'Y')
-
         
     def test(self):
-        self.parse_five_year_finstate_data(["005930"])
+        self.parse_5year_data(["005930"])
         """
         self.crawl_finstate_year(["005930"],2024)
         raw_df = DataController().get_raw_finstate_data("005930",2024,'Y')
