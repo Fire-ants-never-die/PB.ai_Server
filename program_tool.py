@@ -29,7 +29,8 @@ class DateTimeManager():
         #ex 20201231
         self.formatted_today = self.now.strftime("%Y%m%d")
         self.formatted_year = self.now.strftime("%Y")
-    
+        self.year = int(self.formatted_year)
+        
     #return formatted_today - date 
     def get_past_time(self,date:int) -> str:
         past_time = self.now - datetime.timedelta(days=date)

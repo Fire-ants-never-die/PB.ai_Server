@@ -26,10 +26,8 @@ class ReportCrawler():
         #OpenDartReader class
         self.dart = OpenDartReader(self.api_key) # type: ignore
 
-        #test = self.dart.finstate_all('농심', 2021)
-        # print(test.columns)
-        #test.to_excel(excel_writer = 'testdata/sk_test.xlsx')
-        #test.to_feather('testdata/test.feather')
+        #날짜/연도 관리
+        self.datetime = DateTimeManager()
 
     # "stock_list" items must be uniform as either ticker or name
     #  ticker
@@ -64,17 +62,34 @@ class ReportCrawler():
             else:
                 failed_items.append(name)
                 items[name] = None 
-        res = pd.DataFrame(items,index=[0])
-        DataController().save_df_feather(res,year,f"{ticker}{ftype}",False)
+        res_df = pd.DataFrame(items,index=[0])
+        DataController().save_df_feather(res_df,year,f"{ticker}{ftype}",False)
+    
+    #DB001  O(n^2)
+    def parse_five_year_finstate_data(self,tickerlist:list):
+        current_year = self.datetime.year
+        for dy in range(1,6):
+            target_year = current_year - dy
+            #크롤링
+            self.crawl_finstate_year(tickerlist,target_year)
+            #파싱
+            for ticker in tickerlist:
+                raw_df = DataController().get_raw_finstate_data(ticker,target_year,'Y')
+                if raw_df.empty:
+                    continue
+                self.extract_items(raw_df,ticker,target_year,'Y')
+
         
     def test(self):
+        self.parse_five_year_finstate_data(["005930"])
+        """
         self.crawl_finstate_year(["005930"],2024)
         raw_df = DataController().get_raw_finstate_data("005930",2024,'Y')
         self.extract_items(raw_df,"005930",2024,'Y')
         df = DataController().get_finstate_data("005930",2024,'Y')
         df.to_excel("testdata/test.xlsx")
         print(df)
-
+        """
         return
         
 

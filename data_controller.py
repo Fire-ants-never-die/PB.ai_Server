@@ -52,14 +52,15 @@ class DataController:
     
     @staticmethod
     #ftype : Y(사업보고서), H(반기), Q1 (1분기)
-    def get_raw_finstate_data(ticker: str, year:int, ftype : str) ->pd.DataFrame:
-        path = f"data/raw/finstate/{year}{ticker}{ftype}.feather"
-
+    def get_raw_finstate_data(ticker: str, year:int, ftype : str)->pd.DataFrame:
+        path = f"data/raw/{year}/{ticker}{ftype}.feather"
+        res = pd.DataFrame()
         try:
-            res = pd.read_feather(path)
+            res =  pd.read_feather(path)
         except FileNotFoundError:
             print(f"{ticker}경로 찾기 에러")
-
+            print(path)
         except Exception as e:
             print(f"{ticker}데이터를 불러오는 중 에러 발생 :",e)
+
         return res
