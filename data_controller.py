@@ -27,7 +27,7 @@ class DataController:
         if is_raw:
             path += f"raw/{year}"
         else:
-            path += f"{year}"
+            path += f"extracted/{year}"
         path = os.path.join(current_dir,path)
         #path 존재 확인
         os.makedirs(path,exist_ok=True)
@@ -38,8 +38,8 @@ class DataController:
  
     @staticmethod
     #ftype : Y(사업보고서), H(반기), Q1 (1분기)
-    def get_finstate_data(ticker: str, year:int, ftype : str) ->pd.DataFrame:
-        path = f"data/{year}/{ticker}{ftype}.feather"
+    def get_finstate_data(ticker: str, year:int, property : str) ->pd.DataFrame:
+        path = f"data/{year}/{year}{ticker}{property}.feather"
 
         try:
             res = pd.read_feather(path)
@@ -53,7 +53,7 @@ class DataController:
     @staticmethod
     #ftype : Y(사업보고서), H(반기), Q1 (1분기)
     def get_raw_finstate_data(ticker: str, year:int, ftype : str)->pd.DataFrame:
-        path = f"data/raw/{year}/{ticker}{ftype}.feather"
+        path = f"data/raw/{year}/Y{year}T{ticker}P{ftype}.feather"
         res = pd.DataFrame()
         try:
             res =  pd.read_feather(path)

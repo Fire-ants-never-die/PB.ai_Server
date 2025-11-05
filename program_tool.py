@@ -29,6 +29,7 @@ class DateTimeManager():
         #ex 20201231
         self.formatted_today = self.now.strftime("%Y%m%d")
         self.formatted_year = self.now.strftime("%Y")
+        self.formatted_month = self.now.strftime("%m")
         self.year = int(self.formatted_year)
         
     #return formatted_today - date 

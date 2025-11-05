@@ -20,13 +20,20 @@ Y(year)T(ticker)P(property).feather
 여기서 property는 분기 속성을 나타냅니다.
 Q1 : 1분기 Q2: 반기, Q3:3분기, Q4: 사업보고서
 ex)삼성전자 2024년도 사업보고서 기준
-Y2024T005930PQ1.feather
+Y2024T005930PQ4.feather
 
 2. 1차가공 데이터
 feather 말고 sqlite3 db로 저장할지 고민중
 Y(year)T(ticker)P(property).feather
+property는 분기속성,재무상태표or손익계산서 인지를 나타냅니다.
+분기속성은 크롤링한 재무제표 속성과 동일
+재무상태표는 B , 손익계산서는 I
+ex) 삼성전자 2024년도 사업보고서의 재무상태표
+Y2024T005930PQ4B
 
-
+3. 시계열 평균 데이터
+Y(currentyear)T(ticker)P(property).feather
+property 항목은 B (Before march) A (After March) 로 나뉩니다.
 
 #### 1) 재무제표 분석
 기능요구사항 명세서 대로 구현중
