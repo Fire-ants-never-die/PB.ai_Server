@@ -4,12 +4,10 @@ import pandas as pd
 df = pd.DataFrame({
     '이름': ['홍길동', '이몽룡', '성춘향', '변학도'],
     '나이': [25, 23, 20, 30],
-    '직업': ['의적', '의적', '기생', '관리']
+    '직업': [None, None, None, "기생"]
 })
 
-
-job = df.loc[(df['직업'] == '의적') & (df['나이'] == 23), '이름'].to_list()
-print(len(job))
+job = df.loc[(df['직업'] != None)]
 print(job)
 print(type(job))
 

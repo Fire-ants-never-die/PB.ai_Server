@@ -44,48 +44,49 @@ class ReportCrawler():
     #feather파일 이름명 규칙 : 사업보고서(1년)은 ticker뒤에 Y 붙이고, 반기는 H, 분기는 Q1,Q2...이런식으로 
     #ftype : Y / H / Q1 / Q2 / Q3 /Q4
     def extract_items(self,df:pd.DataFrame,ticker:str,year:int,ftype:str):
-        #추출 성공 항목
-        data = []
-        #추출실패 항목
-        failed_items = []
-        #값이 여러개 있는 경우 (검수 필요)
-        strange_items = []
-        #name으로 먼저 추출 시도
+        #재무상태표
+        balance_data = []
+        #손익계산서
+        income_data = []
+        #재무상태표 파싱
         for i in range(len(self.balance_name)):
-            item = {}
-            item["종류"] = "재무상태표"
             name = self.balance_name[i]
             #당기 파싱 (thstrm_amount)
             amount_balance = df.loc[(df['sj_nm']=="재무상태표")&(df['account_nm']==name),'thstrm_amount'].to_list() # type: ignore
+            data = None
             if len(amount_balance) == 1:
-                item[name] = amount_balance[0]
-            elif len(amount_balance) > 2 :
-                strange_items.append(name)
-                item[name] = None
-            else:
-                failed_items.append(name)
-                item[name] = None
-            data.append(item)
+                data = int(amount_balance[0])
+            balance_data.append(data) # type: ignore
+        #손익계산서
         for i in range(len(self.income_name)):
-            item = {}
-            item["종류"] = "손익계산서"
             name = self.income_name[i]
             amount_income = df.loc[(df['sj_nm']=="손익계산서")&(df['account_nm']==name),'thstrm_amount'].to_list() # type: ignore
+            data = None
             if len(amount_income) == 1:
-                item[name] = amount_income[0]
-            elif len(amount_income) > 2 :
-                strange_items.append(name)
-                item[name] = None
-            else:
-                failed_items.append(name)
-                item[name] = None
-            data.append(item)
-
-
-        res_df = pd.DataFrame(data)
+                data = int(amount_income[0])
+            income_data.append(data) 
+        #후처리
+        #당좌자산 = 유동자산 - 재고자산
+        data1 = balance_data[0]
+        data2 = balance_data[3]
+        if (data1 != None) & (data2 != None):
+            balance_data[19] = data1 - data2
+        #차입금(이자지급부채) = 단기차입금+유동성장기부채+사채+장기차입금+금융리스부채
+        def check_None(idx):
+            balance_data[idx] = balance_data[idx] if balance_data[idx] != None else 0
+        check_list = [10,11,13,14,15]
+        for i in check_list:
+            check_None(i)
+        balance_data[20] = 0
+        for i in check_list:
+            balance_data[20] += balance_data[i]
+        balance_dataframe = pd.DataFrame({"type":self.balance_name,"value":balance_data})
+        income_dataframe = pd.DataFrame({"type":self.income_name,"value":income_data})
+        print(balance_data)
+        print(income_data)
         #for debug
-        res_df.to_excel(excel_writer="testdata/testresult.xlsx")
-        DataController().save_df_feather(res_df,year,f"{ticker}{ftype}",False)
+        #res_df.to_excel(excel_writer="testdata/testresult.xlsx")
+        #DataController().save_df_feather(res_df,year,f"{ticker}{ftype}",False)
     
     #DB001, DB002  O(n^2)
     #balance 와 income은 각각 재무상태표,손익계산서를 파싱할지 안할지를 체크하는 bool 변수입니다.
@@ -104,14 +105,6 @@ class ReportCrawler():
         
     def test(self):
         self.parse_5year_data(["005930"])
-        """
-        self.crawl_finstate_year(["005930"],2024)
-        raw_df = DataController().get_raw_finstate_data("005930",2024,'Y')
-        self.extract_items(raw_df,"005930",2024,'Y')
-        df = DataController().get_finstate_data("005930",2024,'Y')
-        df.to_excel("testdata/test.xlsx")
-        print(df)
-        """
         return
         
 
