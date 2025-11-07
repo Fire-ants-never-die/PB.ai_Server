@@ -2,10 +2,46 @@ import os
 import json
 import pandas as pd
 from program_tool import *
+import sqlite3
 
 
 @singleton
 class DataController:
+
+    def __init__(self) -> None:
+        #DB path
+        self.pathtype = {"extracted":"data/extracted.db","raw":"data/raw.db","market":"data/market.db"}
+    
+    def create_table(self,df:pd.DataFrame,dbtype:str,table_name:str,append:bool = True): #dbtype : "extracted", "raw", "market"
+        con = sqlite3.connect(self.pathtype[dbtype])
+        property = "append" if append == True else "replace"
+        df.to_sql(table_name,con,if_exists=property,index=False)
+        con.close()
+
+    def create_table_set_key(self,df:pd.DataFrame,dbtype:str,table_name:str,key_name:str):
+        con = sqlite3.connect(self.pathtype[dbtype])   
+        name_property = f"'{key_name}' TEXT PRIMARY KEY, "
+        for col in df.columns:
+            if col == key_name:
+                continue
+            name_property += f"'{col}' TEXT, "
+        name_property = name_property[:-2]
+
+        sql_order = f"CREATE TABLE IF NOT EXISTS '{table_name}' ({name_property})"
+        print(sql_order)
+        cursor = con.cursor()
+        cursor.execute(sql_order)
+        df.to_sql(table_name,con,if_exists="append",index=False)
+        con.close()
+
+
+
+    def read_table(self,dbtype:str,table_name:str)->pd.DataFrame:
+        con = sqlite3.connect(self.pathtype[dbtype])
+        res = pd.read_sql(f"SELECT * FROM {table_name}",con)
+        con.close()
+        return res
+
 
     @staticmethod
     def get_meta_data() ->dict:

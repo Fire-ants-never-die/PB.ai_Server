@@ -13,8 +13,9 @@ from pykrx import stock,bond
 class ReportCrawler():
 
     def __init__(self):
-        #api key등이 담긴 data/meta.json 
-        meta_data = DataController().get_meta_data()
+        #api key등이 담긴 data/meta.json
+        self.data_controller = DataController()
+        meta_data = self.data_controller.get_meta_data()
 
         #api key
         self.api_key = meta_data["api_key"]
@@ -34,11 +35,10 @@ class ReportCrawler():
     #  ticker
     def crawl_finstate_year(self,ticker: str, year : int):
         fdata = self.dart.finstate_all(ticker,year)
-        DataController().save_df_feather(fdata,year,f"Y{year}T{ticker}PQ4",True)
-
-            #정리해서 다시 엑셀파일에 저장. 추후에 기능분리할 것
-            #fdata.to_excel(excel_writer = f'testdata/{stock}.xlsx')
-    
+        self.data_controller.create_table(fdata,"raw",ticker,False)
+        #feather
+        self.data_controller.save_df_feather(fdata,year,f"Y{year}T{ticker}PQ4",True)
+   
     #크롤링한 재무제표로부터 meta.json의 회계항목들 파싱 -> data/year/005930Y.feather
     #feather파일 이름명 규칙 :분기는 Q1,Q2...이런식으로 
     #Y(year)T(ticker)P(property).feather
@@ -81,8 +81,6 @@ class ReportCrawler():
         balance_data[20] = 0
         for i in check_list:
             balance_data[20] += balance_data[i]
-        #balance_dataframe = pd.DataFrame({"type":self.balance_name,"value":balance_data})
-        #income_dataframe = pd.DataFrame({"type":self.income_name,"value":income_data})
         res = [balance_data,income_data]
         return res
     
@@ -95,10 +93,12 @@ class ReportCrawler():
         if month <= 3:
             current_year -= 1
 
-        time_avg = {"balance": [0 for _ in range(21)],"income" : [0 for _ in range(10)]}
-        fail_count = 0 #크롤 실패한 횟수. 5번이 최대
-        weight_sum = 0
         for ticker in tickerlist:
+            #balance_time_avg = [0 for _ in range(len(self.balance_name))]
+            #income_time_avg = [0 for _ in range(len(self.income_name))]
+
+            fail_count = 0 #크롤 실패한 횟수. 5번이 최대
+            datalist = []
             for dy in range(1,6):
                 target_year = current_year - dy
                 #크롤링
@@ -110,9 +110,47 @@ class ReportCrawler():
                     fail_count += 1
                     continue
                 extracted_data = self.extract_items(raw_df,ticker,target_year,'Y')
+                datalist.append(extracted_data)
+            
+            avg_balance = [0 for _ in range(len(self.balance_name))]
+            avg_income = [0 for _ in range(len(self.income_name))]
+            for i in range(len(datalist)):
+                bdata = datalist[i][0]
+                idata = datalist[i][1]
+                #시계열 평균 계산
+                if i <= 2:
+                    weight = 3 - i
+                    for idx in range(len(avg_balance)):
+                        if bdata[idx] != None:
+                            avg_balance[idx] += weight * bdata[idx]
+                    for idx in range(len(avg_income)):
+                        if idata[idx] != None:
+                            avg_income[idx] += weight * idata[idx]
+                #dataframe으로 만들기
+                bdataframe = pd.DataFrame([bdata],columns= self.balance_name); bdataframe["year"] = str(current_year - i - 1) + "Q4" 
+                idataframe = pd.DataFrame([idata],columns= self.income_name); idataframe["year"] = str(current_year - i - 1) + "Q4"
+
+                #bdataframe.set_index("year"); idataframe.set_index("year")
+                #db에 저장
+                self.data_controller.create_table_set_key(bdataframe,"extracted",f"{ticker}B","year")
+                self.data_controller.create_table_set_key(idataframe,"extracted",f"{ticker}I","year")
+                #self.data_controller.create_table(bdata,"extracted",f"{ticker}B")
+           
+            #시계열 평균 dataframe으로 만들고 db에 저장
+            bmdataframe = pd.DataFrame([avg_balance],columns=self.balance_name); bmdataframe["year"] = str(current_year) + "M"
+            imdataframe = pd.DataFrame([avg_income],columns=self.income_name); imdataframe["year"] = str(current_year) + "M"
+            #bmdataframe.set_index("year"); imdataframe.set_index("year")
+            
+            self.data_controller.create_table_set_key(bmdataframe,"extracted",f"{ticker}B","year")
+            self.data_controller.create_table_set_key(imdataframe,"extracted",f"{ticker}I","year")
+
+            """
                 #저장
                 balance_df = pd.DataFrame(extracted_data[0])
                 income_df = pd.DataFrame(extracted_data[1])
+
+                print(balance_df)
+                
                 DataController().save_df_feather(balance_df,target_year,f"Y{target_year}T{ticker}PQ4B",is_raw=False)
                 DataController().save_df_feather(income_df,target_year,f"Y{target_year}T{ticker}PQ4I",is_raw=False)
 
@@ -120,14 +158,14 @@ class ReportCrawler():
                 weight = 4 - dy if (4-dy) >= 0 else 0
                 weight_sum += weight
 
-                for idx in range(len(time_avg["balance"])):
+                for idx in range(len(balance_time_avg)):
                     if extracted_data[0][idx] == None:
                         continue
-                    time_avg["balance"][idx] += extracted_data[0][idx] * weight
+                    time_avg["balance"][idx] += extracted_data[0][idx][1] * weight
                 for idx in range(len(time_avg["income"])):
                     if extracted_data[1][idx] == None:
                         continue
-                    time_avg["income"][idx] += extracted_data[1][idx] * weight
+                    time_avg["income"][idx] += extracted_data[1][idx][1] * weight
 
             #시계열 평균 나누기
             if weight_sum == 0:
@@ -142,9 +180,7 @@ class ReportCrawler():
             avg_df = pd.DataFrame(time_avg)
             property = "A" if month > 3 else "B"
             DataController().save_df_feather(avg_df,current_year,f"Y{current_year}T{ticker}{property}",False)
-            
-
-
+            """
         
     def test(self):
 
@@ -162,11 +198,12 @@ class KRXCrawler():
 
     def __init__(self) -> None:
         self.date_time_manager = DateTimeManager()
+        self.data_controller = DataController()
 
     def crawl_stock_list(self,date : str = ""):
         if date == "":
             date = self.date_time_manager.formatted_today
-        #kospi(유가)
+        
         tickers_kospi = stock.get_market_ticker_list(date,market="KOSPI")
         tickers_kosdaq = stock.get_market_ticker_list(date,market="KOSDAQ")
         tickers_konex = stock.get_market_ticker_list(date,market="KONEX")
@@ -194,14 +231,23 @@ class KRXCrawler():
         self.kosdaq_df = pd.DataFrame(kosdaq_list_dict)
         self.konex_df = pd.DataFrame(konex_list_dict)
 
-        self.kospi_df.set_index("name")
+        self.kospi_df.set_index("ticker")
+        self.kosdaq_df.set_index("ticker")
+        self.konex_df.set_index("ticker")
+
+        self.data_controller.create_table(self.kospi_df,"market","kospi")
+        self.data_controller.create_table(self.kosdaq_df,"market","kosdaq")
+        self.data_controller.create_table(self.konex_df,"market","konex")
 
 def debug():
     reportCrawler =ReportCrawler()
+    reportCrawler.parse_5year_data(["005930"])
+    #krx= KRXCrawler()
+    #krx.crawl_stock_list()
 
     test_list = ["005930","000660","373220","207940"]
 
-    msg = reportCrawler.test()
+    #msg = reportCrawler.test()
 
 
 
