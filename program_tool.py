@@ -1,5 +1,7 @@
 import os
 import datetime
+import time
+from functools import wraps
 
 # decorator
 def singleton(cls):
@@ -65,10 +67,32 @@ class LoadingDebugger(Debuger):
     def __del__(self):
             super().printd(f"{self.name} 완료")
 
+@singleton
+class Timer():
+
+    def __init__(self):
+        self.log = {}
+
+    def measure(self, func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            start = time.time()
+            result = func(*args, **kwargs)
+            end = time.time()
+            self.log[func.__name__] = end - start
+            return result
+        return wrapper
+
+
 
 def test():
-    dm = DateTimeManager()
-    print(dm.get_past_time(2))
+
+    @Timer().measure
+    def waittime():
+        time.sleep(1)
+    
+    waittime()
+    print(Timer().log)
 
 if __name__ == "__main__":
     test()
