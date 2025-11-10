@@ -34,10 +34,21 @@ class ReportCrawler():
         #분기별 보고서 reprt_code
         self.reprt_code = ["", "11013","11012","11014", "11011"]
 
+        #dart api 호출량 통제 (1000회/분, 20000회/일)를 위한 변수
+        #보수적으로 1초에 15번 이상 호출 안되게끔 해야 함함
+        self.dart_api_call_volume = 0
+        self.timer = Timer()
+
     # "stock_list" items must be uniform as either ticker or nam블
     #  ticker
     def crawl_finstate(self,ticker: str, year : int, quarter:int):
+        #과호출 방지
+        if self.dart_api_call_volume >= 19999 :
+            return False
+        elif self.timer.crawl_timer(self.dart_api_call_volume) == False:
+            return False
         fdata = self.dart.finstate(ticker,year,self.reprt_code[quarter])
+        self.dart_api_call_volume += 1
         self.data_controller.create_table(fdata,"raw",f"{ticker}Q{quarter}",False)
 
         #feather (deprecated)
@@ -89,7 +100,7 @@ class ReportCrawler():
         res = [balance_data,income_data]
         return res
     
-    def parse_5year_data(self,tickerlist:list):
+    def parse_5year_data(self,tickerlist:list) -> bool:
         current_year = self.datetime.year
         month = int(self.datetime.formatted_month)
         #3월달까지는 사업보고서(Q4)가 발행이 안되어 있을 가능성이 있습니다.
@@ -106,7 +117,10 @@ class ReportCrawler():
             for dy in range(1,6):
                 target_year = current_year - dy
                 #크롤링
-                self.crawl_finstate(ticker,target_year,4)
+                is_success = self.crawl_finstate(ticker,target_year,4)
+                #크롤 한도 초과 예외처리
+                if is_success == False:
+                    return False
                 #파싱
                 raw_df = self.data_controller.get_raw_finstate_data(ticker,target_year,'Q4')
                 #크롤 성공여부 평가
@@ -147,7 +161,7 @@ class ReportCrawler():
             
             self.data_controller.create_table_set_key(bmdataframe,"extracted",f"{ticker}B","year")
             self.data_controller.create_table_set_key(imdataframe,"extracted",f"{ticker}I","year")
-        
+        return True
     def test(self):
 
 

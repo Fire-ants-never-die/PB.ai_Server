@@ -45,11 +45,11 @@ class DateTimeManager():
 class Debuger():
     @staticmethod
     def printd(msg):
-        print(f"[DBG] {msg}",flush=True)
+        print(f"\033[31m[DBG] {msg}\033[0m",flush=True)
     @staticmethod
     def printc(msg):
         os.system("cls")
-        print(f"[DBG] {msg}",flush = True)
+        print(f"\033[31m[DBG] {msg}\033[0m",flush = True)
 
 class LoadingDebugger(Debuger):
     def __init__(self,name,total):
@@ -72,6 +72,8 @@ class Timer():
 
     def __init__(self):
         self.log = {}
+        self.last_crawl_time = None
+        self.last_crawl_volume = 0
 
     def measure(self, func):
         @wraps(func)
@@ -82,6 +84,22 @@ class Timer():
             self.log[func.__name__] = end - start
             return result
         return wrapper
+    
+    def crawl_timer(self,current_volume) -> bool:
+        if self.last_crawl_time == None:
+            self.last_crawl_time = time.time()
+            return True
+        now = time.time()
+        duration = now - self.last_crawl_time
+        volume = current_volume - self.last_crawl_volume
+        res = True
+        if duration > 1.0 and volume >= 15:
+            res = False
+            Debuger().printd(f"크롤링 속도가 빠릅니다. {volume} / {duration}")
+        self.last_crawl_time = time.time()
+        self.last_crawl_volume = current_volume
+        return res
+
 
 
 
