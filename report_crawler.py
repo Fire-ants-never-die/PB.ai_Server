@@ -21,7 +21,7 @@ class ReportCrawler():
         self.api_key = meta_data["api_key"]
 
         #크롤링한 재무제표/연결제무제표 +@ 에서 추출할 항목들
-        self.balance_name = meta_data["balance_name"] #이름으로 추출
+        self.balance_name = meta_data["balance_name"] #이름으로 추
         self.income_name = meta_data["income_name"]
         self.balance_id = meta_data["balance_id"] #개정과목체계에 따른 id로 추출
 
@@ -31,13 +31,18 @@ class ReportCrawler():
         #날짜/연도 관리
         self.datetime = DateTimeManager()
 
-    # "stock_list" items must be uniform as either ticker or name
+        #분기별 보고서 reprt_code
+        self.reprt_code = ["", "11013","11012","11014", "11011"]
+
+    # "stock_list" items must be uniform as either ticker or nam블
     #  ticker
-    def crawl_finstate_year(self,ticker: str, year : int):
-        fdata = self.dart.finstate_all(ticker,year)
-        self.data_controller.create_table(fdata,"raw",ticker,False)
-        #feather
-        self.data_controller.save_df_feather(fdata,year,f"Y{year}T{ticker}PQ4",True)
+    def crawl_finstate(self,ticker: str, year : int, quarter:int):
+        fdata = self.dart.finstate(ticker,year,self.reprt_code[quarter])
+        self.data_controller.create_table(fdata,"raw",f"{ticker}Q{quarter}",False)
+
+        #feather (deprecated)
+        #self.data_controller.save_df_feather(fdata,year,f"Y{year}T{ticker}PQ4",True)
+    
    
     #크롤링한 재무제표로부터 meta.json의 회계항목들 파싱 -> data/year/005930Y.feather
     #feather파일 이름명 규칙 :분기는 Q1,Q2...이런식으로 
@@ -84,9 +89,7 @@ class ReportCrawler():
         res = [balance_data,income_data]
         return res
     
-    #DB001, DB002  O(n^2)
-    #balance 와 income은 각각 재무상태표,손익계산서를 파싱할지 안할지를 체크하는 bool 변수입니다.
-    def parse_5year_data(self,tickerlist:list,balance= True,income = True):
+    def parse_5year_data(self,tickerlist:list):
         current_year = self.datetime.year
         month = int(self.datetime.formatted_month)
         #3월달까지는 사업보고서(Q4)가 발행이 안되어 있을 가능성이 있습니다.
@@ -94,17 +97,18 @@ class ReportCrawler():
             current_year -= 1
 
         for ticker in tickerlist:
-            #balance_time_avg = [0 for _ in range(len(self.balance_name))]
-            #income_time_avg = [0 for _ in range(len(self.income_name))]
+
+            #check whether crawled or not
+            #self.data_controller.read_table("raw",f"{ticker}")
 
             fail_count = 0 #크롤 실패한 횟수. 5번이 최대
             datalist = []
             for dy in range(1,6):
                 target_year = current_year - dy
                 #크롤링
-                self.crawl_finstate_year(ticker,target_year)
+                self.crawl_finstate(ticker,target_year,4)
                 #파싱
-                raw_df = DataController().get_raw_finstate_data(ticker,target_year,'Q4')
+                raw_df = self.data_controller.get_raw_finstate_data(ticker,target_year,'Q4')
                 #크롤 성공여부 평가
                 if raw_df.empty:
                     fail_count += 1
@@ -143,44 +147,6 @@ class ReportCrawler():
             
             self.data_controller.create_table_set_key(bmdataframe,"extracted",f"{ticker}B","year")
             self.data_controller.create_table_set_key(imdataframe,"extracted",f"{ticker}I","year")
-
-            """
-                #저장
-                balance_df = pd.DataFrame(extracted_data[0])
-                income_df = pd.DataFrame(extracted_data[1])
-
-                print(balance_df)
-                
-                DataController().save_df_feather(balance_df,target_year,f"Y{target_year}T{ticker}PQ4B",is_raw=False)
-                DataController().save_df_feather(income_df,target_year,f"Y{target_year}T{ticker}PQ4I",is_raw=False)
-
-                #시계열 평균: 가중치 계산
-                weight = 4 - dy if (4-dy) >= 0 else 0
-                weight_sum += weight
-
-                for idx in range(len(balance_time_avg)):
-                    if extracted_data[0][idx] == None:
-                        continue
-                    time_avg["balance"][idx] += extracted_data[0][idx][1] * weight
-                for idx in range(len(time_avg["income"])):
-                    if extracted_data[1][idx] == None:
-                        continue
-                    time_avg["income"][idx] += extracted_data[1][idx][1] * weight
-
-            #시계열 평균 나누기
-            if weight_sum == 0:
-                continue
-            else:
-                for idx in range(len(time_avg["balance"])):
-                    time_avg["balance"][idx] //= weight_sum
-                for idx in range(len(time_avg["income"])):
-                    time_avg["income"][idx] //= weight_sum
-            
-            #시계열 데이터 저장
-            avg_df = pd.DataFrame(time_avg)
-            property = "A" if month > 3 else "B"
-            DataController().save_df_feather(avg_df,current_year,f"Y{current_year}T{ticker}{property}",False)
-            """
         
     def test(self):
 

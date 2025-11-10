@@ -28,36 +28,37 @@ class DataController:
         name_property = name_property[:-2]
 
         sql_order = f"CREATE TABLE IF NOT EXISTS '{table_name}' ({name_property})"
-        print(sql_order)
         cursor = con.cursor()
         cursor.execute(sql_order)
-        df.to_sql(table_name,con,if_exists="append",index=False)
+        try:
+            df.to_sql(table_name,con,if_exists="append",index=False)
+        except sqlite3.IntegrityError:
+            # 이미 존재하는 값일 가능성 큼.
+            pass
         con.close()
-
-
 
     def read_table(self,dbtype:str,table_name:str)->pd.DataFrame:
         con = sqlite3.connect(self.pathtype[dbtype])
-        res = pd.read_sql(f"SELECT * FROM {table_name}",con)
+        res = pd.read_sql(f"SELECT * FROM '{table_name}'",con)
         con.close()
         return res
+    
+    def check_table(self):
+        pass
 
 
-    @staticmethod
-    def get_meta_data() ->dict:
+    def get_meta_data(self) ->dict:
         current_dir = os.path.dirname(__file__)
         meta_path = os.path.join(current_dir,'data','meta.json')
         with open(meta_path,'r',encoding='utf-8') as f:
             meta_data = json.load(f)
         return meta_data
     
-    @staticmethod
-    def save_df_excel(df:pd.DataFrame, name : str):
+    def save_df_excel(self,df:pd.DataFrame, name : str):
         df.to_excel(excel_writer = f'{name}.xlsx')
 
-    
-    @staticmethod
-    def save_df_feather(df:pd.DataFrame, year:int,name: str,is_raw:bool = True):
+    #Deprecated
+    def save_df_feather(self,df:pd.DataFrame, year:int,name: str,is_raw:bool = True):
         current_dir = os.path.dirname(__file__)
         path = "data/"
         if is_raw:
@@ -69,6 +70,8 @@ class DataController:
         os.makedirs(path,exist_ok=True)
         path = os.path.join(path,f'{name}.feather')
         df.to_feather(path)
+    
+
 
 
  

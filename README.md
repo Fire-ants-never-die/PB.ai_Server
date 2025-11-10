@@ -23,7 +23,9 @@ data/
   모두 ticker, name의 칼럼 아래에서 관리되고 있습니다.
 
 3. raw.db
-
+  table 이름 규칙
+  티커명 + 분기명
+  ex) 005930Q1  : 삼성전자 1분기 테이블
 
   /extracted
     2021
@@ -76,6 +78,10 @@ DB002 (5개년 재무상태표 파싱) : 구현 시작 안함. DB001에 api 호�
 ### api key
 파일경로 아래에 data 폴더를 생성, data/meta.json 파일을 생성한다
 json 파일에 "api_key" : "본인의 Dart api key" 를 저장한다.
+
+### Dart api 사용 규칙
+호출 한도 : 일 20000건
+호출 분당 한도 : 1000회/분
 ...
 
 
