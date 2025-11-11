@@ -17,11 +17,11 @@ class ReportCrawler():
         self.data_controller = DataController()
         meta_data = self.data_controller.get_meta_data()
 
-        #api key
+        #api ke출출
         self.api_key = meta_data["api_key"]
 
         #크롤링한 재무제표/연결제무제표 +@ 에서 추출할 항목들
-        self.balance_name = meta_data["balance_name"] #이름으로 추
+        self.balance_name = meta_data["balance_name"] #이름으로 추출
         self.income_name = meta_data["income_name"]
         self.balance_id = meta_data["balance_id"] #개정과목체계에 따른 id로 추출
 
@@ -32,14 +32,14 @@ class ReportCrawler():
         self.datetime = DateTimeManager()
 
         #분기별 보고서 reprt_code
-        self.reprt_code = ["", "11013","11012","11014", "11011"]
+        self.reprt_code = [0,'11013','11012','11014', '11011']
 
         #dart api 호출량 통제 (1000회/분, 20000회/일)를 위한 변수
         #보수적으로 1초에 15번 이상 호출 안되게끔 해야 함함
         self.dart_api_call_volume = 0
         self.timer = Timer()
 
-    # "stock_list" items must be uniform as either ticker or nam블
+    # "stock_list" items must be uniform as either ticker or name => only ticker
     #  ticker
     def crawl_finstate(self,ticker: str, year : int, quarter:int):
         #과호출 방지
@@ -47,12 +47,24 @@ class ReportCrawler():
             return False
         elif self.timer.crawl_timer(self.dart_api_call_volume) == False:
             return False
-        fdata = self.dart.finstate(ticker,year,self.reprt_code[quarter])
+        #fdata = self.dart.finstate(ticker,year,reprt_code = self.reprt_code[quarter])
+        fdata = self.dart.finstate_all(ticker,year)
         self.dart_api_call_volume += 1
-        self.data_controller.create_table(fdata,"raw",f"{ticker}Q{quarter}",False)
+        self.data_controller.create_table(fdata,"raw",f"{year}{ticker}Q{quarter}",False)
 
         #feather (deprecated)
         #self.data_controller.save_df_feather(fdata,year,f"Y{year}T{ticker}PQ4",True)
+    
+    # (연도+티커+분기)리스트에서 크롤링 안한 항목들만 모아서 리스트로 넘겨줍니다.
+    def check_crawled(self,tickermeta_list:list) -> list:
+        res = []
+        cset = self.data_controller.get_crawled_set()
+        for tickermeta in tickermeta_list:
+            if tickermeta in cset:
+                continue
+            else:
+                res.append(tickermeta)
+        return res
     
    
     #크롤링한 재무제표로부터 meta.json의 회계항목들 파싱 -> data/year/005930Y.feather
@@ -60,7 +72,7 @@ class ReportCrawler():
     #Y(year)T(ticker)P(property).feather
     #ftype : Q1 / Q2 / Q3 /Q4
     #[재무상태표리스트,손익계산서리스트] 반환
-    def extract_items(self,df:pd.DataFrame,ticker:str,year:int,ftype:str) -> list:
+    def extract_items(self,df:pd.DataFrame) -> list:
         #재무상태표
         balance_data = []
         #손익계산서
@@ -100,13 +112,133 @@ class ReportCrawler():
         res = [balance_data,income_data]
         return res
     
-    def parse_5year_data(self,tickerlist:list) -> bool:
+    def parse_5year_data(self,tickerlist:list,quarter:int) -> bool:
         current_year = self.datetime.year
+        if quarter == 4:
+            current_year -= 1
         month = int(self.datetime.formatted_month)
+        #성공적으로 파싱한 항목은 meta/parsed_set.pkl 에 저장
+        parsed_list = []
         #3월달까지는 사업보고서(Q4)가 발행이 안되어 있을 가능성이 있습니다.
         if month <= 3:
             current_year -= 1
+        
+        #크롤 안한 재무제표 확인 후 크롤 시작
+        tickermeta_list = []
+        for ticker in tickerlist:
+            for dy in range(0,5):
+                year = current_year - dy
+                tickermeta_list.append(str(year)+ticker+f"Q{quarter}")
+        
+        to_crawl_list = self.check_crawled(tickermeta_list)
 
+        #크롤 코드 (추후 멀티 스레드로 변경)
+
+        for tickermeta in to_crawl_list:
+            year = int(tickermeta[0:4])
+            ticker = tickermeta[4:10]
+            quarter = int(tickermeta[-1])
+
+            is_success = self.crawl_finstate(ticker,year,quarter)
+            #크롤 한도 초과 예외처리
+            if is_success == False:
+                return False
+
+        #크롤 한 후, 메타SET 피클 업데이트 코드
+        self.data_controller.set_crawled_set(new_list=to_crawl_list)
+
+
+        #파싱 코드 (추후 멀티 프로세스로 변경)
+        for tickermeta in tickermeta_list:
+            year = tickermeta[0:4]; quarter = tickermeta[-1]; tickername = tickermeta[4:10]
+            df = self.data_controller.read_table("raw",tickermeta)
+            datalist = self.extract_items(df)
+            #bdata == balance (재무상태표) / idata == income (손익계산서)
+            bdata = datalist[0]; idata = datalist[1]
+            bdataframe = pd.DataFrame([bdata],columns= self.balance_name); bdataframe["year"] = year + "Q" + f"{quarter}" 
+            idataframe = pd.DataFrame([idata],columns= self.income_name); idataframe["year"] = year + "Q" + f"{quarter}"
+            #db 저장 코드
+            self.data_controller.create_table_set_key(bdataframe,"extracted",f"{tickername}B","year")
+            self.data_controller.create_table_set_key(idataframe,"extracted",f"{tickername}I","year")
+
+            parsed_list.append(tickermeta)
+
+        self.data_controller.set_parsed_set(parsed_list)
+        return True
+        
+#--------------------
+    #DB에 저장된 파싱항목을 토대로 3년 시계열평균 (이동평균) 값을 구합니다. CY-1, CY-2, CY-3. 반환값은 실패한 티커리스트
+    def calculate_MA(self,tickerlist,current_year)->list:
+        #실패리스트
+        fail_ticker_list = []
+        #파싱안된 항목 제외하고 계산해서 저장
+        for ticker in tickerlist:
+            #파싱검증
+            pset = self.data_controller.get_parsed_set()
+            flag = True
+            for dy in range(1,4):
+                year = current_year - dy
+                tickermeta = str(year) + ticker + "Q4"
+                if tickermeta not in pset:
+                    flag = False
+                    break
+            if not flag:
+                fail_ticker_list.append(ticker)
+                continue
+            
+            #파싱 데이터 가져오기
+
+            bdataframe = self.data_controller.read_table("extracted",ticker+"B")
+            idataframe = self.data_controller.read_table("extracted",ticker+"I")
+
+            sum_bdict = {"year":f"{current_year}M"}; sum_idict = {"year":f"{current_year}M"}
+            # calculate
+            for dy in range(1,4):
+                year = current_year - dy
+                weight = 4 - dy
+                bdict = bdataframe[bdataframe['year'] == str(year) + "Q4"].to_dict('records')[0]
+                idict = idataframe[idataframe['year'] == str(year) + "Q4"].to_dict('records')[0]
+
+                for key,value in bdict.items():
+                    if key == 'year':
+                        continue
+                    elif value == None:
+                        sum_bdict[key] = None # type: ignore
+                    else:
+                        if key not in sum_bdict:
+                            sum_bdict[key] = int(value) * weight # type: ignore
+
+                        elif sum_bdict[key] == None: # type: ignore
+                            continue
+                        else:
+                            sum_bdict[key] += int(value) * weight # type: ignore
+                            if dy == 3:
+                                sum_bdict[key] /= 3 # type: ignore
+                for key,value in idict.items():
+                    if key == 'year':
+                        continue
+                    elif value == None:
+                        sum_idict[key] = None # type: ignore
+                    else:
+                        if key not in sum_idict:
+                            sum_idict[key] = int(value) * weight # type: ignore
+                        elif sum_idict[key] == None: # type: ignore
+                            continue
+                        else:
+                            sum_idict[key] += int(value) * weight # type: ignore
+                            if dy == 3:
+                                sum_idict[key] /= 3 # type: ignore
+                
+                bmdataframe = pd.DataFrame([sum_bdict])
+                imdataframe = pd.DataFrame([sum_idict])
+                self.data_controller.create_table(bmdataframe,"extracted",f"{ticker}B")
+                self.data_controller.create_table(imdataframe,"extracted",f"{ticker}I")
+
+        return fail_ticker_list
+                 
+
+            
+        """
         for ticker in tickerlist:
 
             #check whether crawled or not
@@ -127,7 +259,7 @@ class ReportCrawler():
                 if raw_df.empty:
                     fail_count += 1
                     continue
-                extracted_data = self.extract_items(raw_df,ticker,target_year,'Y')
+                extracted_data = self.extract_items(raw_df)
                 datalist.append(extracted_data)
             
             avg_balance = [0 for _ in range(len(self.balance_name))]
@@ -162,11 +294,13 @@ class ReportCrawler():
             self.data_controller.create_table_set_key(bmdataframe,"extracted",f"{ticker}B","year")
             self.data_controller.create_table_set_key(imdataframe,"extracted",f"{ticker}I","year")
         return True
+        """
     def test(self):
-
-
-        self.parse_5year_data(["005930"])
-        return
+        self.data_controller.remove_data_for_debug()
+        ticker_list = ["005930","000660"]
+        self.parse_5year_data(ticker_list,4)
+        self.calculate_MA(ticker_list,2025)
+        
         
 
 
@@ -221,7 +355,7 @@ class KRXCrawler():
 
 def debug():
     reportCrawler =ReportCrawler()
-    reportCrawler.parse_5year_data(["005930"])
+    reportCrawler.test()
     #krx= KRXCrawler()
     #krx.crawl_stock_list()
 

@@ -6,13 +6,22 @@
 파일 구조
 
 data/
+  meta/
+    meta.json (api key, 파싱할 항목관리)
+    crawled_set.pkl (크롤한 재무제표 확인용)
+    parsed_set.pkl (파싱한 재무제표 확인용)
   extracted.db (파싱 데이터)
   market.db (국내증권시장티커,이름등)
   raw.db (크롤링한 원본 재무제표데이터)
-  meta.json (api key, 파싱할 항목관리)
+
+
+0. crawled_set.pkl , parsed_set.pkl
+  재무제표를 크롤하면, 혹은 파싱하면 각각, 
+  (year)(ticker)(property) 의 문자열로 set에 추가합니다. property 규정은 1번 extrated.db와 같음
+  ex) 2024005930Q4
 
 1. extracted.db
-  table : 티커명+@으로 되어있음. @가 I는 손익계산서, B 라면, 재무상태표 ex) 005930I
+  table : 티커명+@으로 되어있음. @가 I는 손익계산서, B는 재무상태표 ex) 005930I
   칼럼명 : 파싱항목
   행 : 연도+Property (property 규정: m이라면 시계열평균, Q4,Q3...)
   ex) 2024Q3 : 3분기

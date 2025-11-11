@@ -1,5 +1,5 @@
 
 
-jinu = "jinu"
+jinu = "2025005930Q4"
 
-print(jinu[:-2])
+print(jinu[-1])

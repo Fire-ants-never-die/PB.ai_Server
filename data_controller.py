@@ -3,6 +3,7 @@ import json
 import pandas as pd
 from program_tool import *
 import sqlite3
+import pickle
 
 
 @singleton
@@ -11,11 +12,15 @@ class DataController:
     def __init__(self) -> None:
         #DB path
         self.pathtype = {"extracted":"data/extracted.db","raw":"data/raw.db","market":"data/market.db"}
+        self.meta_path = "data/meta/"
     
     def create_table(self,df:pd.DataFrame,dbtype:str,table_name:str,append:bool = True): #dbtype : "extracted", "raw", "market"
         con = sqlite3.connect(self.pathtype[dbtype])
         property = "append" if append == True else "replace"
-        df.to_sql(table_name,con,if_exists=property,index=False)
+        try:
+            df.to_sql(table_name,con,if_exists=property,index=False)
+        except sqlite3.IntegrityError:
+            pass
         con.close()
 
     def create_table_set_key(self,df:pd.DataFrame,dbtype:str,table_name:str,key_name:str):
@@ -43,19 +48,83 @@ class DataController:
         con.close()
         return res
     
-    def check_table(self):
-        pass
-
 
     def get_meta_data(self) ->dict:
-        current_dir = os.path.dirname(__file__)
-        meta_path = os.path.join(current_dir,'data','meta.json')
-        with open(meta_path,'r',encoding='utf-8') as f:
+        #current_dir = os.path.dirname(__file__)
+        #meta_path = os.path.join(current_dir,'data','meta.json')
+        path = self.meta_path + "meta.json"
+        with open(path,'r',encoding='utf-8') as f:
             meta_data = json.load(f)
         return meta_data
     
     def save_df_excel(self,df:pd.DataFrame, name : str):
         df.to_excel(excel_writer = f'{name}.xlsx')
+
+
+    def set_crawled_set(self,new_list:list):
+        path = self.meta_path + "crawled_set.pkl"
+        if os.path.exists(path):
+            with open(path,'rb') as f:
+                cset = pickle.load(f)
+        else:
+            cset = set()
+        cset.update(new_list)
+        
+        with open(path,'wb') as f:
+            pickle.dump(cset,f)
+
+    def set_parsed_set(self,new_list:list):
+        path = self.meta_path + "parsed_set.pkl"
+        if os.path.exists(path):
+            with open(path,'rb') as f:
+                pset = pickle.load(f)
+        else:
+            pset = set()
+        pset.update(new_list)
+        
+        with open(path,'wb') as f:
+            pickle.dump(pset,f)
+        
+
+    def get_crawled_set(self) -> set:
+        path = self.meta_path + "crawled_set.pkl"
+        if os.path.exists(path):
+            with open(path,'rb') as f:
+                res = pickle.load(f)
+                return res
+        else:
+            empty_set = set()
+            return empty_set
+
+    def get_parsed_set(self) -> set:
+        path = self.meta_path + "parsed_set.pkl"
+        if os.path.exists(path):
+            with open(path,'rb') as f:
+                res = pickle.load(f)
+                return res
+        else:
+            empty_set = set()
+            return empty_set
+
+
+
+    def remove_data_for_debug(self):
+        path1 = "data/extracted.db"
+        path2 = "data/raw.db"
+        path3 = "data/meta/crawled_set.pkl"
+        path4 = "data/meta/parsed_set.pkl"
+
+        path_list = [path1,path2,path3,path4]
+        for i in path_list:
+            if os.path.exists(i):
+                os.remove(i)
+
+
+
+
+
+
+#-------------------------------------------------------------------------------------------------
 
     #Deprecated
     def save_df_feather(self,df:pd.DataFrame, year:int,name: str,is_raw:bool = True):
@@ -70,11 +139,7 @@ class DataController:
         os.makedirs(path,exist_ok=True)
         path = os.path.join(path,f'{name}.feather')
         df.to_feather(path)
-    
-
-
-
- 
+    #Deprecated
     @staticmethod
     #ftype : Y(사업보고서), H(반기), Q1 (1분기)
     def get_finstate_data(ticker: str, year:int, property : str) ->pd.DataFrame:
@@ -88,7 +153,7 @@ class DataController:
         except Exception as e:
             print(f"{ticker}데이터를 불러오는 중 에러 발생 :",e)
         return res
-    
+    #Deprecated
     @staticmethod
     #ftype : Y(사업보고서), H(반기), Q1 (1분기)
     def get_raw_finstate_data(ticker: str, year:int, ftype : str)->pd.DataFrame:
