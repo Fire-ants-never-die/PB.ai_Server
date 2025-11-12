@@ -1,12 +1,7 @@
 import pandas as pd
-import json
 from program_tool import *
 from data_controller import DataController
-from tqdm import tqdm
 import OpenDartReader
-import openpyxl
-import pyarrow
-
 from pykrx import stock,bond
 
 @singleton
