@@ -2,17 +2,22 @@ import pandas as pd
 from program_tool import *
 from data_controller import DataController
 import OpenDartReader
-from pykrx import stock,bond
+from krx_crawler import KrxCrawler
+from tqdm import tqdm
 
+#싱글톤
 @singleton
 class ReportCrawler():
-
+    #초기화:api key, data_controller 객체, 추출항목, dart(재무제표크롤링) 객체, krx(국내시장크롤링)객체
+    #      datetime (날짜관리) 객체, timer (api과호출 방지) 객체
+    #   위 내용을 초기화 합니다. 추후에 embedding api, gpt api 등의 모듈이 다른 파일에서 작성되면, 여기서 객체로
+    #   초기화 될 수 있습니다. vscode vim 한글 에러 거지같네 개발자 누구야 이거
     def __init__(self):
         #api key등이 담긴 data/meta.json
         self.data_controller = DataController()
         meta_data = self.data_controller.get_meta_data()
 
-        #api ke출출
+        #api key 호출
         self.api_key = meta_data["api_key"]
 
         #크롤링한 재무제표/연결제무제표 +@ 에서 추출할 항목들
@@ -22,6 +27,9 @@ class ReportCrawler():
 
         #OpenDartReader class
         self.dart = OpenDartReader(self.api_key) # type: ignore
+
+        #KRX Cralwer class
+        self.krx = KrxCrawler()
 
         #날짜/연도 관리
         self.datetime = DateTimeManager()
@@ -33,23 +41,33 @@ class ReportCrawler():
         #보수적으로 1초에 15번 이상 호출 안되게끔 해야 함함
         self.dart_api_call_volume = 0
         self.timer = Timer()
-
-    # "stock_list" items must be uniform as either ticker or name => only ticker
-    #  ticker
-    def crawl_finstate(self,ticker: str, year : int, quarter:int):
+   
+   
+    #재무제표를 크롤링하는 함수입니다. 결과는 raw.db에 저장됩니다.
+    #ticker는 string 형식으로, year은 int, 분기는 int 형으로 입력되어야 합니다.
+    #ex) crawl_finstate("005930",2024,2)  : 삼성전자 2024년도 2분기 재무제표
+    def crawl_finstate(self,ticker: str, year : int, quarter:int = 4):
         #과호출 방지
         if self.dart_api_call_volume >= 19999 :
             return False
         elif self.timer.crawl_timer(self.dart_api_call_volume) == False:
             return False
         #fdata = self.dart.finstate(ticker,year,reprt_code = self.reprt_code[quarter])
-        fdata = self.dart.finstate_all(ticker,year)
-        self.dart_api_call_volume += 1
+        try:
+            self.dart_api_call_volume += 1
+            fdata = self.dart.finstate_all(ticker,year)
+        except:
+            return
+        if fdata.empty:
+            print(f"비어있음 : {ticker} / {year}")
+            return
         self.data_controller.create_table(fdata,"raw",f"{year}{ticker}Q{quarter}",False)
 
         #feather (deprecated)
         #self.data_controller.save_df_feather(fdata,year,f"Y{year}T{ticker}PQ4",True)
     
+    #중복 크롤링을 방지하기 위해 특정 회사들을 크롤링했는지 체크하는 메서드입니다. 
+    #일반적인 상황에서는 쓰이지 않을 것으로 예상하지만 혹시나 해서 만들어두었습니다. parse_5year_data()메서드 안에서 호출됩니다.
     # (연도+티커+분기)리스트에서 크롤링 안한 항목들만 모아서 리스트로 넘겨줍니다.
     def check_crawled(self,tickermeta_list:list) -> list:
         res = []
@@ -60,13 +78,9 @@ class ReportCrawler():
             else:
                 res.append(tickermeta)
         return res
-    
    
-    #크롤링한 재무제표로부터 meta.json의 회계항목들 파싱 -> data/year/005930Y.feather
-    #feather파일 이름명 규칙 :분기는 Q1,Q2...이런식으로 
-    #Y(year)T(ticker)P(property).feather
-    #ftype : Q1 / Q2 / Q3 /Q4
-    #[재무상태표리스트,손익계산서리스트] 반환
+    #크롤링한 재무제표로부터 meta.json의 회계항목들 파싱하는 메서드입니다.
+    #파싱된 항목들은 재무상태표와 손익계산서로 분리되어, 2차원 리스트 [재무상태표리스트,손익계산서리스트]로 반환됩니다.
     def extract_items(self,df:pd.DataFrame) -> list:
         #재무상태표
         balance_data = []
@@ -76,7 +90,7 @@ class ReportCrawler():
         for i in range(len(self.balance_name)):
             name = self.balance_name[i]
             #당기 파싱 (thstrm_amount)
-            amount_balance = df.loc[(df['sj_nm']=="재무상태표")&(df['account_nm']==name),'thstrm_amount'].to_list() # type: ignore
+            amount_balance = df.loc[(df['sj_div']=="BS")&(df['account_nm']==name),'thstrm_amount'].to_list() # type: ignore
             data = None
             if len(amount_balance) == 1:
                 data = int(amount_balance[0])
@@ -84,7 +98,7 @@ class ReportCrawler():
         #손익계산서
         for i in range(len(self.income_name)):
             name = self.income_name[i]
-            amount_income = df.loc[(df['sj_nm']=="손익계산서")&(df['account_nm']==name),'thstrm_amount'].to_list() # type: ignore
+            amount_income = df.loc[(df['sj_nm']=="CIS")&(df['account_nm']==name),'thstrm_amount'].to_list() # type: ignore
             data = None
             if len(amount_income) == 1:
                 data = int(amount_income[0])
@@ -107,6 +121,8 @@ class ReportCrawler():
         res = [balance_data,income_data]
         return res
     
+    #5개년도 재무데이터를 파싱하는 메서드입니다. 가급적 크롤링이 선행되면 좋지만, 안되어있을 경우 크롤링도 합니다.
+    #크롤한도가 초과되면 False를, 성공적으로 파싱되면 True를 반환합니다다
     def parse_5year_data(self,tickerlist:list,quarter:int) -> bool:
         current_year = self.datetime.year
         if quarter == 4:
@@ -161,8 +177,8 @@ class ReportCrawler():
         self.data_controller.set_parsed_set(parsed_list)
         return True
         
-#--------------------
-    #DB에 저장된 파싱항목을 토대로 3년 시계열평균 (이동평균) 값을 구합니다. CY-1, CY-2, CY-3. 반환값은 실패한 티커리스트
+    #DB에 저장된 파싱항목을 토대로 3년 시계열평균 (이동평균) 값을 구합니다. CY-1, CY-2, CY-3
+    # 반환값은 실패한 티커리스트.
     def calculate_MA(self,tickerlist,current_year)->list:
         #실패리스트
         fail_ticker_list = []
@@ -230,76 +246,30 @@ class ReportCrawler():
                 self.data_controller.create_table(imdataframe,"extracted",f"{ticker}I")
 
         return fail_ticker_list
-                 
+    
+    # 시장의 보고서를 추출합니다. market은 "ALL", "KOSPI", "KOSDAQ", "KONEX" 입니다.
+    # parse_5_year_data 가 호출되기 전에 이 메서드로 한 번에 미리 크롤링하는 것이 좋습니다.
+    def crawl_market_report(self,market :str = "ALL",quarter :int = 4):
+        today = self.datetime.formatted_today
+        year = int(self.datetime.formatted_year) - 1
+        tickerlist = self.krx.get_market_list(today,market)
+        
+        if int(self.datetime.formatted_month) <= 3:
+            year -= 1
+        
+        for ticker in progress(tickerlist,f"{market}재무제표 크롤링중"):
+            self.crawl_finstate(ticker,year,quarter)
 
-            
-        """
-        for ticker in tickerlist:
-
-            #check whether crawled or not
-            #self.data_controller.read_table("raw",f"{ticker}")
-
-            fail_count = 0 #크롤 실패한 횟수. 5번이 최대
-            datalist = []
-            for dy in range(1,6):
-                target_year = current_year - dy
-                #크롤링
-                is_success = self.crawl_finstate(ticker,target_year,4)
-                #크롤 한도 초과 예외처리
-                if is_success == False:
-                    return False
-                #파싱
-                raw_df = self.data_controller.get_raw_finstate_data(ticker,target_year,'Q4')
-                #크롤 성공여부 평가
-                if raw_df.empty:
-                    fail_count += 1
-                    continue
-                extracted_data = self.extract_items(raw_df)
-                datalist.append(extracted_data)
-            
-            avg_balance = [0 for _ in range(len(self.balance_name))]
-            avg_income = [0 for _ in range(len(self.income_name))]
-            for i in range(len(datalist)):
-                bdata = datalist[i][0]
-                idata = datalist[i][1]
-                #시계열 평균 계산
-                if i <= 2:
-                    weight = 3 - i
-                    for idx in range(len(avg_balance)):
-                        if bdata[idx] != None:
-                            avg_balance[idx] += weight * bdata[idx]
-                    for idx in range(len(avg_income)):
-                        if idata[idx] != None:
-                            avg_income[idx] += weight * idata[idx]
-                #dataframe으로 만들기
-                bdataframe = pd.DataFrame([bdata],columns= self.balance_name); bdataframe["year"] = str(current_year - i - 1) + "Q4" 
-                idataframe = pd.DataFrame([idata],columns= self.income_name); idataframe["year"] = str(current_year - i - 1) + "Q4"
-
-                #bdataframe.set_index("year"); idataframe.set_index("year")
-                #db에 저장
-                self.data_controller.create_table_set_key(bdataframe,"extracted",f"{ticker}B","year")
-                self.data_controller.create_table_set_key(idataframe,"extracted",f"{ticker}I","year")
-                #self.data_controller.create_table(bdata,"extracted",f"{ticker}B")
-           
-            #시계열 평균 dataframe으로 만들고 db에 저장
-            bmdataframe = pd.DataFrame([avg_balance],columns=self.balance_name); bmdataframe["year"] = str(current_year) + "M"
-            imdataframe = pd.DataFrame([avg_income],columns=self.income_name); imdataframe["year"] = str(current_year) + "M"
-            #bmdataframe.set_index("year"); imdataframe.set_index("year")
-            
-            self.data_controller.create_table_set_key(bmdataframe,"extracted",f"{ticker}B","year")
-            self.data_controller.create_table_set_key(imdataframe,"extracted",f"{ticker}I","year")
-        return True
-        """
-    def test(self):
-        self.data_controller.remove_data_for_debug()
-        ticker_list = ["005930","000660"]
-        self.parse_5year_data(ticker_list,4)
-        self.calculate_MA(ticker_list,2025)
+    #디버깅용 시험 메서드
+    def __test(self):
+        # self.data_controller.remove_data_for_debug()
+        # self.crawl_market_report("KOSPI",4)
         
         
 
 
-#인터넷을 사용해서 긁어올 기업정보가 있을때 사용하는 클래스입니다.
+#인터넷을 사용해서 긁어올 기업정보가 있을때 사용하는 클래스입니다. deprecated
+""" 
 @singleton
 class KRXCrawler():
     #상장법인리스트 url
@@ -346,11 +316,12 @@ class KRXCrawler():
 
         self.data_controller.create_table(self.kospi_df,"market","kospi")
         self.data_controller.create_table(self.kosdaq_df,"market","kosdaq")
-        self.data_controller.create_table(self.konex_df,"market","konex")
+        self.data_controller.create_table(self.konex_df,"market","konex") 
+"""
 
 def debug():
     reportCrawler =ReportCrawler()
-    reportCrawler.test()
+    reportCrawler.__test()
     #krx= KRXCrawler()
     #krx.crawl_stock_list()
 

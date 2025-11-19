@@ -2,6 +2,7 @@ import os
 import datetime
 import time
 from functools import wraps
+from tqdm import tqdm
 
 # decorator
 def singleton(cls):
@@ -18,6 +19,22 @@ def logging(func):
         print(f"{func.__name__} called")
         print(f"{func.__name__} finished")
     return wrapper
+
+#decorator deprecated
+def _progress(desc = ""):
+    def deco(func):
+        def wrapper(iterable, *args, **kwargs):
+            res = []
+            for item in tqdm(iterable,ncols=100,desc=f"{func.__name__}[{desc}]"):
+                res.append(func(item,*args,**kwargs))
+            return res
+        return wrapper
+    return deco
+
+#non deco
+def progress(iterable,explain:str):
+    return tqdm(iterable,ncols=100,desc=f"[{explain}]")
+    
 
 @singleton
 class DateTimeManager():
@@ -64,6 +81,7 @@ class LoadingDebugger(Debuger):
                 os.system("cls")
             super().printd(f"{self.name} 진행률 : {cnt}/{self.total}   ||  {cnt/self.total * 100}%")
             self.progress += 0.1
+
     def __del__(self):
             super().printd(f"{self.name} 완료")
 
@@ -103,7 +121,7 @@ class Timer():
 
 
 
-def test():
+def tool_test():
 
     @Timer().measure
     def waittime():
@@ -113,4 +131,4 @@ def test():
     print(Timer().log)
 
 if __name__ == "__main__":
-    test()
+    tool_test()
