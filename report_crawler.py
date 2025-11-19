@@ -84,7 +84,7 @@ class ReportCrawler():
         sucess_list = []
         fail_list = []
         to_crawl_list = self.check_crawled(tickermetalist)
-        for tickermeta in to_crawl_list:
+        for tickermeta in progress(to_crawl_list,"재무제표크롤링중"):
             is_sucess = self.__crawl_finstate(tickermeta)
             if is_sucess:
                 sucess_list.append(tickermeta)
@@ -263,21 +263,25 @@ class ReportCrawler():
     
     # 시장의 보고서를 추출합니다. market은 "ALL", "KOSPI", "KOSDAQ", "KONEX" 입니다.
     # parse_5_year_data 가 호출되기 전에 이 메서드로 한 번에 미리 크롤링하는 것이 좋습니다.
-    def crawl_market_report(self,market :str = "ALL",quarter :int = 4):
+    def crawl_market_5_year_report(self,market :str = "ALL",quarter :int = 4):
         today = self.datetime.formatted_today
         year = int(self.datetime.formatted_year) - 1
         tickerlist = self.krx.get_market_list(today,market)
-        
+
         if int(self.datetime.formatted_month) <= 3:
             year -= 1
-        
-        for ticker in progress(tickerlist,f"{market}재무제표 크롤링중"):
-            self.crawl_finstate(ticker,year,quarter)
+        tickermetalist = []
+        for ticker in tickerlist:
+            for dy in range(5):
+                tickermeta = f"{year - dy}{ticker}Q{quarter}"
+                tickermetalist.append(tickermeta)
+        self.crawl_finstate_by_tickermetalist(tickermeta)
 
     #디버깅용 시험 메서드
     def test(self):
         self.data_controller.remove_data_for_debug()
-
+        #파싱이 깨끗해지면 시험해볼것.
+        #self.crawl_market_5_year_report("KOSPI")
         #-------------------
         test_ticker_list = ["005930", "000660", "373220", "207940"]
         tickermetalist = []
@@ -287,7 +291,7 @@ class ReportCrawler():
             tickermetalist.append(tickermeta)
         
         fail = self.crawl_finstate_by_tickermetalist(tickermetalist)
-
+    
         print(fail)
 
             

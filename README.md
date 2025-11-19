@@ -3,6 +3,8 @@
 ---
 
 ### 0) 공지
+현재 feature/crawl_finstate branch에서 작업중입니다.
+
 파일 구조
 
 data/
