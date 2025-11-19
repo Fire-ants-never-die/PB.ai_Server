@@ -43,31 +43,59 @@ class ReportCrawler():
         self.timer = Timer()
    
    
-    #재무제표를 크롤링하는 함수입니다. 결과는 raw.db에 저장됩니다.
+    #재무제표를 크롤링하는 함수입니다. 결과는 raw.db에 저장됩니다. 성공하면 True 반환
     #ticker는 string 형식으로, year은 int, 분기는 int 형으로 입력되어야 합니다.
     #ex) crawl_finstate("005930",2024,2)  : 삼성전자 2024년도 2분기 재무제표
-    def crawl_finstate(self,ticker: str, year : int, quarter:int = 4):
+    def __crawl_finstate(self,tickermeta):
         #과호출 방지
         if self.dart_api_call_volume >= 19999 :
+            Debuger.printc("api 과호출")
             return False
         elif self.timer.crawl_timer(self.dart_api_call_volume) == False:
+            Debuger.printc("api 과호출")
             return False
-        #fdata = self.dart.finstate(ticker,year,reprt_code = self.reprt_code[quarter])
+        #크롤링
+        year = int(tickermeta[0:4])
+        ticker = tickermeta[4:10]
+        quarter = int(tickermeta[-1])
         try:
             self.dart_api_call_volume += 1
             fdata = self.dart.finstate_all(ticker,year)
         except:
-            return
+            Debuger.printc("dart 크롤링 실패")
+            return False
+        #비어있으면 크롤실패로 간주
         if fdata.empty:
-            print(f"비어있음 : {ticker} / {year}")
-            return
-        self.data_controller.create_table(fdata,"raw",f"{year}{ticker}Q{quarter}",False)
-
-        #feather (deprecated)
-        #self.data_controller.save_df_feather(fdata,year,f"Y{year}T{ticker}PQ4",True)
+            Debuger.printc(f"크롤된 데이터 비어있음 : {ticker} / {year}")
+            return False
+        #데이터 저장
+        table_name = tickermeta
+        try:
+            self.data_controller.create_table(fdata,"raw",table_name,False)
+        except:
+            Debuger.printc("데이터 저장과정에서 에러")
+            return False
+        
+        return True
     
+    #티커리스트의 모든 회사들의 재무제표를 크롤링한 후, 저장사항을 meta/crawled_set.pkl에 기록합니다.
+    #크롤 안된 티커meta 반환합니다.
+    def crawl_finstate_by_tickermetalist(self,tickermetalist)->list:
+        sucess_list = []
+        fail_list = []
+        to_crawl_list = self.check_crawled(tickermetalist)
+        for tickermeta in to_crawl_list:
+            is_sucess = self.__crawl_finstate(tickermeta)
+            if is_sucess:
+                sucess_list.append(tickermeta)
+            else:
+                fail_list.append(tickermeta)
+        #저장사항 기록
+        self.data_controller.set_crawled_set(sucess_list)
+        return fail_list
+
     #중복 크롤링을 방지하기 위해 특정 회사들을 크롤링했는지 체크하는 메서드입니다. 
-    #일반적인 상황에서는 쓰이지 않을 것으로 예상하지만 혹시나 해서 만들어두었습니다. parse_5year_data()메서드 안에서 호출됩니다.
+    #일반적인 상황에서는 쓰이지 않을 것으로 예상하지만 혹시나 해서 만들어두었습니다. 
     # (연도+티커+분기)리스트에서 크롤링 안한 항목들만 모아서 리스트로 넘겨줍니다.
     def check_crawled(self,tickermeta_list:list) -> list:
         res = []
@@ -79,7 +107,7 @@ class ReportCrawler():
                 res.append(tickermeta)
         return res
    
-    #크롤링한 재무제표로부터 meta.json의 회계항목들 파싱하는 메서드입니다.
+    #크롤링한 재무제표로부터 meta.json의 회계항목들 파싱하는 메서드입니다. parse_5_year_data()메서드에서 호출됩니다.
     #파싱된 항목들은 재무상태표와 손익계산서로 분리되어, 2차원 리스트 [재무상태표리스트,손익계산서리스트]로 반환됩니다.
     def extract_items(self,df:pd.DataFrame) -> list:
         #재무상태표
@@ -134,33 +162,19 @@ class ReportCrawler():
         if month <= 3:
             current_year -= 1
         
-        #크롤 안한 재무제표 확인 후 크롤 시작
-        tickermeta_list = []
+        #티커메타 구성후 크롤 시작 (티커메타 = {year}{ticker}Q{quarter})
+        tickermetalist = []
         for ticker in tickerlist:
             for dy in range(0,5):
                 year = current_year - dy
-                tickermeta_list.append(str(year)+ticker+f"Q{quarter}")
-        
-        to_crawl_list = self.check_crawled(tickermeta_list)
+                tickermetalist.append(str(year)+ticker+f"Q{quarter}")
 
-        #크롤 코드 (추후 멀티 스레드로 변경)
-
-        for tickermeta in to_crawl_list:
-            year = int(tickermeta[0:4])
-            ticker = tickermeta[4:10]
-            quarter = int(tickermeta[-1])
-
-            is_success = self.crawl_finstate(ticker,year,quarter)
-            #크롤 한도 초과 예외처리
-            if is_success == False:
-                return False
-
-        #크롤 한 후, 메타SET 피클 업데이트 코드
-        self.data_controller.set_crawled_set(new_list=to_crawl_list)
-
+        fail_list = self.crawl_finstate_by_tickermetalist(tickermetalist)       
 
         #파싱 코드 (추후 멀티 프로세스로 변경)
-        for tickermeta in tickermeta_list:
+        for tickermeta in tickermetalist:
+            if tickermeta in fail_list:
+                continue
             year = tickermeta[0:4]; quarter = tickermeta[-1]; tickername = tickermeta[4:10]
             df = self.data_controller.read_table("raw",tickermeta)
             datalist = self.extract_items(df)
@@ -261,67 +275,31 @@ class ReportCrawler():
             self.crawl_finstate(ticker,year,quarter)
 
     #디버깅용 시험 메서드
-    def __test(self):
-        # self.data_controller.remove_data_for_debug()
+    def test(self):
+        self.data_controller.remove_data_for_debug()
+
+        #-------------------
+        test_ticker_list = ["005930", "000660", "373220", "207940"]
+        tickermetalist = []
+        to_crawl_list = self.check_crawled(test_ticker_list)
+        for ticker in to_crawl_list:
+            tickermeta = f"2024{ticker}Q4"
+            tickermetalist.append(tickermeta)
+        
+        fail = self.crawl_finstate_by_tickermetalist(tickermetalist)
+
+        print(fail)
+
+            
         # self.crawl_market_report("KOSPI",4)
         
         
 
 
 #인터넷을 사용해서 긁어올 기업정보가 있을때 사용하는 클래스입니다. deprecated
-""" 
-@singleton
-class KRXCrawler():
-    #상장법인리스트 url
-    #url = "http://kind.krx.co.kr/corpgeneral/corpList.do?method=download"
-
-    def __init__(self) -> None:
-        self.date_time_manager = DateTimeManager()
-        self.data_controller = DataController()
-
-    def crawl_stock_list(self,date : str = ""):
-        if date == "":
-            date = self.date_time_manager.formatted_today
-        
-        tickers_kospi = stock.get_market_ticker_list(date,market="KOSPI")
-        tickers_kosdaq = stock.get_market_ticker_list(date,market="KOSDAQ")
-        tickers_konex = stock.get_market_ticker_list(date,market="KONEX")
-        
-        kospi_list_dict = {"ticker":[],"name":[]}
-        kosdaq_list_dict = {"ticker":[],"name":[]}
-        konex_list_dict = {"ticker":[],"name":[]}
-
-        for ticker in tickers_kospi:
-            name = stock.get_market_ticker_name(ticker)
-            kospi_list_dict["ticker"].append(ticker)
-            kospi_list_dict["name"].append(name)
-
-        for ticker in tickers_kosdaq:
-            name = stock.get_market_ticker_name(ticker)
-            kosdaq_list_dict["ticker"].append(ticker)
-            kosdaq_list_dict["name"].append(name)
-
-        for ticker in tickers_konex:
-            name = stock.get_market_ticker_name(ticker)
-            konex_list_dict["ticker"].append(ticker)
-            konex_list_dict["name"].append(name)
-        
-        self.kospi_df = pd.DataFrame(kospi_list_dict)
-        self.kosdaq_df = pd.DataFrame(kosdaq_list_dict)
-        self.konex_df = pd.DataFrame(konex_list_dict)
-
-        self.kospi_df.set_index("ticker")
-        self.kosdaq_df.set_index("ticker")
-        self.konex_df.set_index("ticker")
-
-        self.data_controller.create_table(self.kospi_df,"market","kospi")
-        self.data_controller.create_table(self.kosdaq_df,"market","kosdaq")
-        self.data_controller.create_table(self.konex_df,"market","konex") 
-"""
-
 def debug():
     reportCrawler =ReportCrawler()
-    reportCrawler.__test()
+    reportCrawler.test()
     #krx= KRXCrawler()
     #krx.crawl_stock_list()
 
