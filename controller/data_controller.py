@@ -1,9 +1,7 @@
-import os
-import json
+import os , sys, json ,pickle, sqlite3
 import pandas as pd
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from program_tool import *
-import sqlite3
-import pickle
 
 
 @singleton
@@ -23,6 +21,7 @@ class DataController:
             pass
         con.close()
 
+    #테이블화하면서 특정 열을 primary key화 합니다.
     def create_table_set_key(self,df:pd.DataFrame,dbtype:str,table_name:str,key_name:str):
         con = sqlite3.connect(self.pathtype[dbtype])   
         name_property = f"'{key_name}' TEXT PRIMARY KEY, "
@@ -109,12 +108,13 @@ class DataController:
 
 
     def remove_data_for_debug(self):
-        path1 = "data/extracted.db"
-        path2 = "data/raw.db"
-        path3 = "data/meta/crawled_set.pkl"
-        path4 = "data/meta/parsed_set.pkl"
+        path1 = "../data/extracted.db"
+        path2 = "../data/raw.db"
+        path3 = "../data/meta/crawled_set.pkl"
+        path4 = "../data/meta/parsed_set.pkl"
+        path5 = "../data/market.db"
 
-        path_list = [path1,path2,path3,path4]
+        path_list = [path1,path2,path3,path4,path5]
         for i in path_list:
             if os.path.exists(i):
                 os.remove(i)

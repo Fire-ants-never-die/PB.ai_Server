@@ -1,9 +1,11 @@
 import pandas as pd
+import OpenDartReader
+from tqdm import tqdm
+from krx_crawler import KrxCrawler
+import os, sys
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from program_tool import *
 from controller.data_controller import DataController
-import OpenDartReader
-from crawler.krx_crawler import KrxCrawler
-from tqdm import tqdm
 
 #싱글톤
 @singleton
@@ -280,11 +282,9 @@ class ReportCrawler():
     #디버깅용 시험 메서드
     def test(self):
         self.data_controller.remove_data_for_debug()
-        tickers = self.krx.get_market_list("20251120","KOSPI")
-        for ticker in tickers:
-            for t in ticker:
-                if t.isdigit() == False:
-                    print(ticker)
+        print(self.dart.company("005930"))
+
+        #ceo_nm, est_dt(설립일자), 
         #self.crawl_market_5_year_report("KOSPI")
 
         #-------------------
