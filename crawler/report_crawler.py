@@ -1,8 +1,8 @@
 import pandas as pd
 from program_tool import *
-from data_controller import DataController
+from controller.data_controller import DataController
 import OpenDartReader
-from krx_crawler import KrxCrawler
+from crawler.krx_crawler import KrxCrawler
 from tqdm import tqdm
 
 #싱글톤
@@ -41,8 +41,8 @@ class ReportCrawler():
         #보수적으로 1초에 15번 이상 호출 안되게끔 해야 함함
         self.dart_api_call_volume = 0
         self.timer = Timer()
-   
-   
+
+    #private입니다. 
     #재무제표를 크롤링하는 함수입니다. 결과는 raw.db에 저장됩니다. 성공하면 True 반환
     #ticker는 string 형식으로, year은 int, 분기는 int 형으로 입력되어야 합니다.
     #ex) crawl_finstate("005930",2024,2)  : 삼성전자 2024년도 2분기 재무제표
@@ -62,7 +62,7 @@ class ReportCrawler():
             self.dart_api_call_volume += 1
             fdata = self.dart.finstate_all(ticker,year)
         except:
-            Debuger.printc("dart 크롤링 실패")
+            Debuger.printc(f"dart 크롤링 실패: {tickermeta}")
             return False
         #비어있으면 크롤실패로 간주
         if fdata.empty:
@@ -109,14 +109,14 @@ class ReportCrawler():
    
     #크롤링한 재무제표로부터 meta.json의 회계항목들 파싱하는 메서드입니다. parse_5_year_data()메서드에서 호출됩니다.
     #파싱된 항목들은 재무상태표와 손익계산서로 분리되어, 2차원 리스트 [재무상태표리스트,손익계산서리스트]로 반환됩니다.
-    def extract_items(self,df:pd.DataFrame) -> list:
+    def parse_items(self,df:pd.DataFrame) -> list:
         #재무상태표
         balance_data = []
         #손익계산서
         income_data = []
         #재무상태표 파싱
         for i in range(len(self.balance_name)):
-            name = self.balance_name[i]
+            name = self.balance_id[i]
             #당기 파싱 (thstrm_amount)
             amount_balance = df.loc[(df['sj_div']=="BS")&(df['account_nm']==name),'thstrm_amount'].to_list() # type: ignore
             data = None
@@ -177,7 +177,7 @@ class ReportCrawler():
                 continue
             year = tickermeta[0:4]; quarter = tickermeta[-1]; tickername = tickermeta[4:10]
             df = self.data_controller.read_table("raw",tickermeta)
-            datalist = self.extract_items(df)
+            datalist = self.parse_items(df)
             #bdata == balance (재무상태표) / idata == income (손익계산서)
             bdata = datalist[0]; idata = datalist[1]
             bdataframe = pd.DataFrame([bdata],columns= self.balance_name); bdataframe["year"] = year + "Q" + f"{quarter}" 
@@ -261,25 +261,34 @@ class ReportCrawler():
 
         return fail_ticker_list
     
-    # 시장의 보고서를 추출합니다. market은 "ALL", "KOSPI", "KOSDAQ", "KONEX" 입니다.
+    # 5개년 시장의 보고서를 크롤만 합니다. market은 "ALL", "KOSPI", "KOSDAQ", "KONEX" 입니다.
     # parse_5_year_data 가 호출되기 전에 이 메서드로 한 번에 미리 크롤링하는 것이 좋습니다.
-    def crawl_market_report(self,market :str = "ALL",quarter :int = 4):
+    def crawl_market_5_year_report(self,market :str = "ALL",quarter :int = 4):
         today = self.datetime.formatted_today
         year = int(self.datetime.formatted_year) - 1
         tickerlist = self.krx.get_market_list(today,market)
         
         if int(self.datetime.formatted_month) <= 3:
             year -= 1
-        
-        for ticker in progress(tickerlist,f"{market}재무제표 크롤링중"):
-            self.crawl_finstate(ticker,year,quarter)
+        tickermetalist = []
+        for ticker in tickerlist:
+            for dy in range(5):
+                tickermeta = f"{year - dy}{ticker}Q{quarter}"
+                tickermetalist.append(tickermeta)
+        self.crawl_finstate_by_tickermetalist(tickermetalist)
 
     #디버깅용 시험 메서드
     def test(self):
         self.data_controller.remove_data_for_debug()
+        tickers = self.krx.get_market_list("20251120","KOSPI")
+        for ticker in tickers:
+            for t in ticker:
+                if t.isdigit() == False:
+                    print(ticker)
+        #self.crawl_market_5_year_report("KOSPI")
 
         #-------------------
-        test_ticker_list = ["005930", "000660", "373220", "207940"]
+        """ test_ticker_list = ["005930", "000660", "373220", "207940"]
         tickermetalist = []
         to_crawl_list = self.check_crawled(test_ticker_list)
         for ticker in to_crawl_list:
@@ -288,7 +297,7 @@ class ReportCrawler():
         
         fail = self.crawl_finstate_by_tickermetalist(tickermetalist)
 
-        print(fail)
+        print(fail) """
 
             
         # self.crawl_market_report("KOSPI",4)

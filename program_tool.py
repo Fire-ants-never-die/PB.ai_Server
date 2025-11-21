@@ -65,7 +65,7 @@ class Debuger():
         print(f"\033[31m[DBG] {msg}\033[0m",flush=True)
     @staticmethod
     def printc(msg):
-        os.system("cls")
+        #os.system("cls")
         print(f"\033[31m[DBG] {msg}\033[0m",flush = True)
 
 class LoadingDebugger(Debuger):

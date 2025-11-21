@@ -2,6 +2,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from program_tool import *
 import time
 
+
+
+# 멀티 스레드를 위한 클래스 입니다.
+
 class ParallelExecutorThread:
     def __init__(self, workers=4):
         self.workers = workers
@@ -19,18 +23,22 @@ class ParallelExecutorThread:
                 results.append(f.result())
         return results
 
-def do_task(msg):
-    time.sleep(1)
-    print(msg)
-    
-@Timer().measure
-def do_five():
-    for _ in range(1,5):
-        do_task(_)
+
 
 
 def debug():
+
+
+    def do_task(msg):
+        time.sleep(1)
+        print(msg)
+    
+    @Timer().measure
+    def do_five():
+        for _ in range(1,5):
+            do_task(_)
     do_five()
+    
     print(Timer().log)
 
     start = time.time()
