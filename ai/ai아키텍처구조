@@ -1,0 +1,13 @@
+재무제표 DataFrame
+       ↓ (정제)
+텍스트로 변환
+       ↓ (임베딩)
+OpenAI Embeddings API
+       ↓
+벡터DB(Faiss/Chroma/Pinecone 등)
+       ↓ (유사도 검색)
+쿼리 입력 → 관련 재무정보 검색
+       ↓
+GPT 모델에게 컨텍스트 제공
+       ↓
+최종 답변 생성(RAG)

@@ -36,6 +36,11 @@ class report_overview():
         
     #1 기업 프로필
     #[시가총액 상장일자x 설립일자 종업원수x 대표이사 발행주식수 주요계열사x] 딕셔너리로 반환
+
+
+    # 현재 위 리스트의 x 항목을 크롤 할 방법을 찾아야 함.
+
+
     def get_company_profile(self) -> dict:
         info_dict = {}
         info_dict["시가총액"] = self.market_data["Marcap"]
