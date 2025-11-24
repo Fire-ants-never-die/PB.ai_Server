@@ -82,7 +82,7 @@ DB002 (5개년 재무상태표 파싱) : 구현 시작 안함. DB001에 api 호�
 1.OpenDataReader : pip install opendartreader  (conda 채널에 없음.)
 2.json
 3.pandas
-4.requests
+4.openai
 
 ### api key
 파일경로 아래에 data 폴더를 생성, data/meta.json 파일을 생성한다
