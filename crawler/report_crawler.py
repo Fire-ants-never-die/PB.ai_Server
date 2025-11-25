@@ -118,7 +118,7 @@ class ReportCrawler():
         income_data = []
         #재무상태표 파싱
         for i in range(len(self.balance_name)):
-            name = self.balance_id[i]
+            name = self.balance_name[i]
             #당기 파싱 (thstrm_amount)
             amount_balance = df.loc[(df['sj_div']=="BS")&(df['account_nm']==name),'thstrm_amount'].to_list() # type: ignore
             data = None
@@ -282,22 +282,16 @@ class ReportCrawler():
     #디버깅용 시험 메서드
     def test(self):
         self.data_controller.remove_data_for_debug()
-        print(self.dart.company("005930"))
 
         #ceo_nm, est_dt(설립일자), 
         #self.crawl_market_5_year_report("KOSPI")
 
         #-------------------
-        """ test_ticker_list = ["005930", "000660", "373220", "207940"]
-        tickermetalist = []
-        to_crawl_list = self.check_crawled(test_ticker_list)
-        for ticker in to_crawl_list:
-            tickermeta = f"2024{ticker}Q4"
-            tickermetalist.append(tickermeta)
+        test_ticker_list = ["005930", "000660", "373220", "207940"]
         
-        fail = self.crawl_finstate_by_tickermetalist(tickermetalist)
+        self.parse_5year_data(test_ticker_list,4)
+        
 
-        print(fail) """
 
             
         # self.crawl_market_report("KOSPI",4)

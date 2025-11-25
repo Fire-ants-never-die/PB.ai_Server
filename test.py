@@ -1,17 +1,43 @@
-import FinanceDataReader as fdr
+import pandas as pd
 
-# KRX 상장종목 전체 정보 가져오기
-df = fdr.StockListing('KRX')
+data = {
+    "year" : ["2024Q4","2023Q3","2024m"],
+    "자산": [100, 20, 15],
+    "채권": [30, 25, 18],
+    "mola": [44, 30, 22]
+}
+df = pd.DataFrame(data)
+print(df)
 
-# 데이터 확인
-print(df.head())
+def df_to_text_chunks(df,company_name,table_name):
+    chunks = []
+    _type = "재무상태표"
+    if table_name[-1] == "I":
+        _type = "손익계산서"
+    
+    common_text = f"[회사명: {company_name}] {_type}"
 
-# 특정 기업 예: 삼성전자
-company_name = '삼성전자'
-company_info = df[df['Name'] == company_name]
+    for idx, row in df.iterrows():
+        text = common_text
+        year = ""; property = ""; 
+        property_text = ""; data_text = ""
+        for col,val in row.items():
+            if col == "year":
+                year = val[0:4]
+                property = val[4:]
+                if property[0] == 'Q':
+                    property_text += f"{year} {property[1]}분기"
+                else:
+                    property_text += f"{year} 3년 시계열평균"
+            else:
+                data_text += f" {col} : {val}"
+        text += property_text
+        text += data_text
+        chunks.append(text)
+    return chunks
 
-if not company_info.empty:
-    listing_date = company_info.iloc[0]['ListingDate']
-    print(f"{company_name} 상장일: {listing_date}")
-else:
-    print(f"{company_name} 정보가 없습니다.")
+list = df_to_text_chunks(df,"samsung","005930Q4I")
+print("size : ",len(list))
+
+for i in list:
+    print(i)     
