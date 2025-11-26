@@ -10,7 +10,7 @@ class ComapanyDataChunking:
 
 
     #private
-    #아래 형식의 dataframe을 청크로 바꿔줍니다.
+    #아래 형식의 dataframe을 청크로 바꿔줍니다. token은 
     #year    유동자산, 채권 ...
     #2024Q4   4343   234 
     #회사 이름과, 테이블 이름이 string 인자로 들어갑니다.
@@ -45,6 +45,7 @@ class ComapanyDataChunking:
 @singleton
 class OpenAi:
 
+    #key.json 파일에서 api key를 불러오고, OpenAI 객체를 인스턴스 변수로 선언합니다.
     def __init__(self,test = False):
         
         with open("key.json") as f:
@@ -59,4 +60,22 @@ class OpenAi:
 
         self.client = OpenAI(api_key=__api_key)
     
-    def get_embedding(self,chunks):
+
+
+    #임베딩
+    #db에서 불러온 데이터프레임을 리스트화 하고, 각 데이터프레임에 맞는 [회사이름,테이블이름] 리스트를
+    #df_list 와 company_table_list로 집어넣습니다.
+    def get_embedding(self,df_list:pd.DataFrame,company_table_list:list,model : str = "small"):
+        if model != "large" or model != "small":
+            return
+        model_name = "text-embedding-3-" + model
+
+        embeddings = []
+
+        for idx in range(len(df_list)):
+            df = df_list[idx]; company = company_table_list[idx][0]; table = company_table_list[idx][1]
+            emb = self.client.embeddings.create(
+                model = model_name,
+                input = df
+            )           
+

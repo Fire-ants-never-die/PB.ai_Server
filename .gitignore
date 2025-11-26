@@ -3,3 +3,4 @@ __pycache__/
 test.py
 data/
 docs_cache/
+ai/key.json
