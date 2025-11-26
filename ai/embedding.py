@@ -1,6 +1,7 @@
 from program_tool import *
 import json, sys,os,pandas as pd
 from openai import OpenAI
+import tiktoken
 
 class ComapanyDataChunking:
 
@@ -8,6 +9,12 @@ class ComapanyDataChunking:
         self.df = df
         self.company_name = company_name
 
+    #api에 들어갈 토큰 길이를 카운팅합니다.
+    #임베딩은 입력 토큰 길이가 500~1000로 제한할 것입니다.
+    #token 측정은 모델별로 상이합니다.
+    def token_counter(self,text):
+        enc = tiktoken.get_encoding("cl100k_base")
+        return len(enc.encode(text))
 
     #private
     #아래 형식의 dataframe을 청크로 바꿔줍니다. token은 
@@ -72,6 +79,8 @@ class OpenAi:
 
         embeddings = []
 
+
+        #수정 필요. 토큰길이 1000개 단위 정도로 잘라서 데이터 청킹후에, 아래 반복문 수정.
         for idx in range(len(df_list)):
             df = df_list[idx]; company = company_table_list[idx][0]; table = company_table_list[idx][1]
             emb = self.client.embeddings.create(
