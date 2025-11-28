@@ -4,7 +4,7 @@ from openai import OpenAI
 from chunking import Chunking
 
 @singleton
-class RAG:
+class Embedding:
 
     CHUNK_LENGTH = 1000
 
