@@ -1,6 +1,5 @@
 from program_tool import *
 import json, sys,os,pandas as pd
-from openai import OpenAI
 import tiktoken
 
 class Chunking:
