@@ -1,13 +1,29 @@
+===[전처리]===
+
 재무제표 DataFrame
-       ↓ (정제)
-텍스트로 변환
-       ↓ (임베딩)
-OpenAI Embeddings API
+       ↓ 
+청킹 (청킹 길이 미정. 500~1500 사이 예상)
+       ↓ 
+임베딩 (open ai embedding api, 모델 미정. 일단embedding-small)
        ↓
-벡터DB(Faiss/Chroma/Pinecone 등)
-       ↓ (유사도 검색)
-쿼리 입력 → 관련 재무정보 검색
+벡터DB(Faiss/Chroma/Pinecone...일단은 chroma로)
+
+
+
+
+===[사용자 질문 (이하 쿼리)]===
+
+쿼리 입력 → 쿼리 임베딩
        ↓
-GPT 모델에게 컨텍스트 제공
+벡터 DB 유사 문서 검색
        ↓
-최종 답변 생성(RAG)
+프롬프트 삽입
+       ↓
+답변 생성 (open ai gpt api. 모델 미정)
+
+
+**
+사용자 질문처리 흐름에서, gpt에게 사전 프롬프트 엔지니어링이 필요할 것 같습니다.
+1. AI 정체성
+2. 말투...
+ex) "당신은 재무 분석"
