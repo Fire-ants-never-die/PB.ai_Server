@@ -1,4 +1,8 @@
 import pandas as pd
 
-p = "2022005940adf"
-print(p[4:10])
+a = {'1':"asdf;","2":"sdafj;lk"}
+b = {'3':"jkdsfjk"}
+
+a.update(b)
+
+print(a)
