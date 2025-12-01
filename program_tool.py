@@ -34,7 +34,25 @@ def _progress(desc = ""):
 #non deco
 def progress(iterable,explain:str):
     return tqdm(iterable,ncols=100,desc=f"[{explain}]")
-    
+
+#non deco
+def format_number(num:int) -> str:
+    res = ""
+    if num < 0:
+        res = "-"
+        num = abs(num)
+    if num >= 1e12:
+        value = num / 1e12
+        res += f"{value:.4g}조"
+    elif num >= 1e8:
+        value = num / 1e8
+        res += f"{value:.4g}억"
+    elif num >= 1e4:
+        value = num / 1e4
+        res += f"{value:.4g}만"
+    else:
+        res = str(num)
+    return res
 
 @singleton
 class DateTimeManager():
@@ -121,14 +139,10 @@ class Timer():
 
 
 
-def tool_test():
+def __tool_test():
 
-    @Timer().measure
-    def waittime():
-        time.sleep(1)
-    
-    waittime()
-    print(Timer().log)
+    a = 123876432
+    print(format_number(a))
 
 if __name__ == "__main__":
-    tool_test()
+    __tool_test()
