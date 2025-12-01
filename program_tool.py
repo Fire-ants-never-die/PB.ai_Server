@@ -36,11 +36,24 @@ def progress(iterable,explain:str):
     return tqdm(iterable,ncols=100,desc=f"[{explain}]")
 
 #non deco
-def format_number(num:int) -> str:
+def format_number(num:int,style = False) -> str:
     res = ""
     if num < 0:
         res = "-"
         num = abs(num)
+
+    if style == True:
+        jo = int(num // 1e12)
+        euk = int((num % 1e12)// 1e8)
+        if jo > 0 : 
+            res += f"{jo}조"
+        if euk > 0 :
+            if jo > 0:
+                res += " "
+            res += f"{euk}억"
+        else:
+            res += f"{int(num//1e4)}만"
+        return res
     if num >= 1e12:
         value = num / 1e12
         res += f"{value:.4g}조"
@@ -141,8 +154,8 @@ class Timer():
 
 def __tool_test():
 
-    a = 123876432
-    print(format_number(a))
+    a = 123876432000000
+    print(format_number(a,True))
 
 if __name__ == "__main__":
     __tool_test()
