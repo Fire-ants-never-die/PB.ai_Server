@@ -1,5 +1,6 @@
 import os , sys, json ,pickle, sqlite3
 import pandas as pd
+#상위폴더 모듈 import
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from program_tool import *
 
@@ -108,21 +109,30 @@ class DataController:
 
 
     def remove_data_for_debug(self):
-        path1 = "../data/extracted.db"
-        path2 = "../data/raw.db"
-        path3 = "../data/meta/crawled_set.pkl"
-        path4 = "../data/meta/parsed_set.pkl"
-        path5 = "../data/market.db"
+        Debuger.printc("데이터 삭제")
+        path1 = "data/extracted.db"
+        path2 = "data/raw.db"
+        path3 = "data/meta/crawled_set.pkl"
+        path4 = "data/meta/parsed_set.pkl"
+        path5 = "data/market.db"
+
+        parent_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+        Debuger.printc(parent_dir)
 
         path_list = [path1,path2,path3,path4,path5]
         for i in path_list:
-            if os.path.exists(i):
-                os.remove(i)
+            path = os.path.join(parent_dir,i)
+            if os.path.exists(path):
+                os.remove(path)
 
 
 
+#------------- for test
 
-
+    def to_excel_test(self,df:pd.DataFrame,name:str):
+        parent_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+        path = parent_dir + f"/testdata/{name}.xlsx"
+        df.to_excel(excel_writer = path)
 
 #-------------------------------------------------------------------------------------------------
 

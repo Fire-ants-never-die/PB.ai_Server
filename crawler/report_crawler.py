@@ -26,6 +26,7 @@ class ReportCrawler():
         self.balance_name = meta_data["balance_name"] #이름으로 추출
         self.income_name = meta_data["income_name"]
         self.balance_id = meta_data["balance_id"] #개정과목체계에 따른 id로 추출
+        self.income_id = meta_data["income_id"]
 
         #OpenDartReader class
         self.dart = OpenDartReader(self.api_key) # type: ignore
@@ -119,21 +120,35 @@ class ReportCrawler():
         #재무상태표 파싱
         for i in range(len(self.balance_name)):
             name = self.balance_name[i]
-            #당기 파싱 (thstrm_amount)
-            amount_balance = df.loc[(df['sj_div']=="BS")&(df['account_nm']==name),'thstrm_amount'].to_list() # type: ignore
+            id = self.balance_id[i]
+            #당기 파싱 (thstrm_amount) (이름으로 => account_nm)
+            amount_balance = df.loc[(df['sj_div']=="BS")&(df['account_nm'].str.contains(name,case=False,na=False)),'thstrm_amount'].to_list() # type: ignore
+            amount_balance_id = df.loc[(df['sj_div']=="BS")&(df['account_id']==id),'thstrm_amount'].to_list() # type: ignore
             data = None
-            if len(amount_balance) == 1:
+            #dataframe null 확인
+            if len(amount_balance) >= 1:
                 data = int(amount_balance[0])
+            #id로 존재하면 id 쓰기
+            else:
+                if len(amount_balance_id) >= 1:
+                    data = int(amount_balance_id[0])
             balance_data.append(data) # type: ignore
-        #손익계산서
+
+        #손익계산서 (포괄,일반)
         for i in range(len(self.income_name)):
             name = self.income_name[i]
-            amount_income = df.loc[(df['sj_nm']=="CIS")&(df['account_nm']==name),'thstrm_amount'].to_list() # type: ignore
+            id = self.income_id[i]
+            amount_income = df.loc[(df['sj_div']=="CIS")&(df['account_nm'].str.contains(name,case=False,na=False)),'thstrm_amount'].to_list() # type: ignore
+            amount_income_id = df.loc[(df['sj_div']=="CIS")&(df['account_id']==id),'thstrm_amount'].to_list() # type: ignore
+            amount_income_IS = df.loc[(df['sj_div']=="IS")&(df['account_nm'].str.contains(name,case=False,na=False)),'thstrm_amount'].to_list() # type: ignore
+            amount_income_IS_id = df.loc[(df['sj_div']=="IS")&(df['account_id']==id),'thstrm_amount'].to_list() # type: ignore
             data = None
-            if len(amount_income) == 1:
-                data = int(amount_income[0])
+            for amount_list in [amount_income,amount_income_id,amount_income_IS,amount_income_IS_id]:
+                if len(amount_list) >= 1:
+                    data = int(amount_list[0])
+                    break
             income_data.append(data) 
-        #후처리
+        #=====후처리======
         #당좌자산 = 유동자산 - 재고자산
         data1 = balance_data[0]
         data2 = balance_data[3]
@@ -148,6 +163,15 @@ class ReportCrawler():
         balance_data[20] = 0
         for i in check_list:
             balance_data[20] += balance_data[i]
+        # 매출원가 = 매출액 - 매출총이익
+        data1 = income_data[0]; data2 = income_data[1]
+        if (data1 != None) & (data2 != None):
+            income_data[8] = data1 - data2
+        # 판매비와관리비 = 매출총이익 - 영업이익
+        data1 = income_data[1]; data2 = income_data[2]
+        if (data1 != None) & (data2 != None):
+            income_data[8] = data1 - data2
+        #======후처리 끝 =====
         res = [balance_data,income_data]
         return res
     
@@ -290,6 +314,10 @@ class ReportCrawler():
         test_ticker_list = ["005930", "000660", "373220", "207940"]
         
         self.parse_5year_data(test_ticker_list,4)
+        #df = self.dart.finstate_all("삼성전자",2023)
+        # df2 = self.dart.finstate('삼성전자', 2021, reprt_code='11013')
+        # df3 = self.dart.finstate('005930, 000660, 005380', 2021)
+        #self.data_controller.to_excel_test(df,"samsung2023")
         
 
 
