@@ -344,13 +344,14 @@ class ReportCrawler():
         # crawled_set = self.data_controller.get_crawled_set()
 
         # sucess_ticker_list = self.parse_5year_data([],4)
-        self.calculate_MA(2025)
+        #self.calculate_MA(2025)
         #df = self.dart.finstate_all("삼성전자",2023)
         # df2 = self.dart.finstate('삼성전자', 2021, reprt_code='11013')
         # df3 = self.dart.finstate('005930, 000660, 005380', 2021)
         #self.data_controller.to_excel_test(df,"samsung2023")
-        
 
+        a = self.dart.report('005930','직원',2024)
+        print(a)
 
             
         # self.crawl_market_report("KOSPI",4)

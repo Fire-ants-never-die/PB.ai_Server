@@ -90,7 +90,7 @@ class KrxCrawler:
         company_df = df[['Code','Name','Market','Dept','Open','High','Low','Close','Volume','Marcap','Stocks']]
         
         #db 저장코드. 런타임 메모리가 부족하지 않다면 나중에 지워도 될듯.
-        #self.data_controller.create_table_set_key(df = company_df,dbtype="market",table_name=self.date.formatted_today,key_name='Code')
+        self.data_controller.create_table_set_key(df = company_df,dbtype="market",table_name=self.date.formatted_today,key_name='Code')
 
         return company_df
 
