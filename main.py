@@ -9,28 +9,14 @@ from program_tool import *
 # 반환값은 json으로 쉽게 변경하기 위하여 가급적 dictionay 형으로 반환합니다. (값 하나만 출력하는거면 int,str)
 # 미완성 메서드는 주석에 ***를 붙입니다. 
 
-#싱글톤 객체들 초기화 (크롤링 관련 객체 초기화 오래걸리므로 미리 선언하라고 묶어둠)
-def init_objects():
-    #전부 싱글톤 객체입니다.
-
-    krx = KrxCrawler() #kospi 전체 테이블 가져오기때문에 시간 사알짝 걸립니다.
-
-    data_controller = DataController()
-    report_crawler = ReportCrawler()
-
-
-#메인 홈
-def main_home():
-    #이거는...없을 듯??
-    pass
-
-
-#리포트 기업 오버뷰 (krx 크롤링이 포함됩니다.)
-class report_overview():
-    # company_name은 ticker, 이름 둘 다 가능합니다.
+#report에 들어갈 데이터 객체 한 번에 생성. 리포트 안의 5가지 탭을 오갈 때, 중복 처리 하지 않기 위해서 딱 한번만 불러옵니다.
+#프/백 개발자는 이 클래스만 쓰면 됩니다!! + AI 클래스 하나 더.
+class report():
     def __init__(self,company_name) -> None:
+        #전부 싱글톤 객체입니다.
         self.krx = KrxCrawler()
         self.data_controller = DataController()
+        self.report_crawler = ReportCrawler()
         #회사의 기본 시장상황 정보를 krx로부터 불러옵니다. 'Code','Name','Market','Dept','Open','High','Low','Close','Volume','Marcap','Stocks'
         try:
             self.company_market_data = self.krx.market_df.loc[self.krx.market_df['Name'] == company_name].iloc[0].to_dict()
@@ -45,7 +31,23 @@ class report_overview():
                 Debuger.printc(f"{company_name} 을 찾을 수 없습니다.")
         #기타
         self.current_year = DateTimeManager().formatted_year
+
+        #4가지 탭 클래스 인스턴스 선언. 기업 overview, 재무현황 분석, 투자지표, 주식가치평가. (채팅은 ai이므로 일단 따로 빼두겠습니다.)
         
+        self.report_ov = ReportOverview(self.name,self.ticker,self.company_market_data)
+        self.report_fa = ReportFinancialAnalyze()
+        self.report_ii = ReportInvestmentIndex()
+        self.report_sv = ReportStockValuation()
+    
+    
+
+#리포트 기업 오버뷰 (krx 크롤링이 포함됩니다.)
+class ReportOverview(report):
+    # company_name은 ticker, 이름 둘 다 가능합니다.
+    def __init__(self,name,ticker,market_data):
+        self.name = name
+        self.ticker = ticker
+        self.company_market_data = market_data
     #1 기업 프로필 ***
     #[시가총액 상장일자x 설립일자 종업원수x 대표이사 발행주식수 주요계열사x] 딕셔너리로 반환
     # 현재 위 리스트의 x 항목을 크롤 할 방법을 찾아야 함.
@@ -105,17 +107,18 @@ class report_overview():
 
 
 #리포트_재무현황 분석
-def report_finance_analyze():
+class ReportFinancialAnalyze():
+
     pass
 
-
 #리포트_투자지표
-def report_investment_index():
+class ReportInvestmentIndex():
     pass
 
 #리포트_주식가치평가
-def report_stock_valuation():
+class ReportStockValuation():
     pass
+
 
 
 
