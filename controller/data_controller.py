@@ -23,7 +23,7 @@ class DataController:
         con.close()
 
     #테이블화하면서 특정 열을 primary key화 합니다.
-    def create_table_set_key(self,df:pd.DataFrame,dbtype:str,table_name:str,key_name:str):
+    def create_table_set_key(self,df:pd.DataFrame,dbtype:str,table_name:str,key_name:str,replace:bool = False):
         con = sqlite3.connect(self.pathtype[dbtype])   
         name_property = f"'{key_name}' TEXT PRIMARY KEY, "
         for col in df.columns:
@@ -36,7 +36,8 @@ class DataController:
         cursor = con.cursor()
         cursor.execute(sql_order)
         try:
-            df.to_sql(table_name,con,if_exists="append",index=False)
+            append_type = "append" if replace == False else "replace"
+            df.to_sql(table_name,con,if_exists=append_type,index=False)
         except sqlite3.IntegrityError:
             # 이미 존재하는 값일 가능성 큼.
             pass
