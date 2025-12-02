@@ -35,7 +35,7 @@ class report():
         #4가지 탭 클래스 인스턴스 선언. 기업 overview, 재무현황 분석, 투자지표, 주식가치평가. (채팅은 ai이므로 일단 따로 빼두겠습니다.)
         
         self.report_ov = ReportOverview(self.name,self.ticker,self.company_market_data)
-        self.report_fa = ReportFinancialAnalyze()
+        self.report_fa = ReportFinancialAnalyze(self.name,self.ticker,self.current_year)
         self.report_ii = ReportInvestmentIndex()
         self.report_sv = ReportStockValuation()
     
@@ -108,8 +108,88 @@ class ReportOverview(report):
 
 #리포트_재무현황 분석
 class ReportFinancialAnalyze():
+    def __init__(self,name,ticker,current_year) -> None:
+        self.name = name
+        self.ticker = ticker
+        self.current_year = current_year
+        self.data_controller = DataController()
 
-    pass
+    #1 재무 상황. 리포트오버뷰 페이지와 동일한 데이터지만, 실제로 그래프를 그려야 하므로
+    #  한글로 포매팅된 str 형식이 아닌, int형 데이터를 반환해야 합니다. 그래프 아래에 보여질
+    # 표를 위해 한글로 포매팅된 str값도 반환해야 합니다.
+    # {"real": 실제 숫자 형식 (최대)5개년 데이터, "format" : 표에 들어갈 한글형식 (1조3000억)데이터}
+    def get_company_status(self) -> dict:
+        info_dict = {}
+        real_number_dict = {}
+        format_number_dict = {}
+        table_balance = f"{self.ticker}B"
+        table_income = f"{self.ticker}I"
+        item_list = ["매출액","자산총계","부채총계","자본총계","당기순이익"]
+        try:
+            df_b = self.data_controller.read_table("extracted",table_balance)
+            df_i = self.data_controller.read_table("extracted",table_income)
+        except:
+            Debuger.printc(f"{self.name}({self.ticker})가 DB에 저장되어있지 않습니다.")
+            return info_dict
+        for i in range(5):
+            year_format_dict = {}
+            year_real_dict = {}
+            target_year = int(self.current_year) - i
+            b_dict = df_b[df_b['year'] == target_year].to_dict('records')
+            i_dict = df_i[df_i['year'] == target_year].to_dict('records')
+            for key in item_list:
+                if key in b_dict:
+                    year_format_dict[key] = format_number(int(b_dict[key])) # type: ignore
+                    year_real_dict[key] = format_number(int(b_dict[key])) # type: ignore
+                elif key in i_dict:
+                    year_format_dict[key] = format_number(int(i_dict[key]))  # type: ignore
+                    year_real_dict[key] = format_number(int(i_dict[key]))  # type: ignore
+                else:
+                    year_format_dict[key] = "NULL"
+                    year_real_dict[key] = "NULL"
+            format_number_dict[f"{target_year}"] = year_format_dict
+            real_number_dict[f"{target_year}"] = year_real_dict
+        
+        info_dict["real":real_number_dict, "format":format_number_dict]
+
+        return info_dict
+
+    #2 재무 비율 판정.
+    def get_evaluation_financial_ratio(self):
+        pass
+
+    #3 안정성 분석
+    #3.1 유동성 분석   유동비율 : {"2023": data, "시계열평균": data, "업종중위수" : data, "시계열점수" : data, "업종점수" : data}
+    #                당좌비율...
+    #                현금비율, 순운전자본대총자본, 비유동비율, 비유동장기적합율 등등이 key로 존재합니다.
+    def get_analyze_stability_liquidity(self):
+        pass
+
+    #3.2 레버리지 분석
+    # 열 값은 3.1과 같으며, {부채비율, 자기자본비율, 유동부채비율, 비유동부채비율,차입금의존도, 차입금대매출액} 이 있습니다.
+    def get_analyze_stability_leverage(self):
+        pass
+    
+    #4 수익성 분석
+    #4.1 투자수익성 분석
+    #열 값은 3.1과 같으며, {총자산세전수익률, 총자산순이익률,기업세전순이익률,기업순이익률,자기자본세전순이익률,자본금세전순이익률,자본금순이익률,자기자본순이익률}
+    def get_analyze_profitability_investment(self):
+        pass
+    #4.2 판매 마진 분석
+    #열 값은 3.1과 같으며, {매출액세전순이익률,매출액순이익률,매출액영업이익률,EBIT대매출액,EBITDA대매출액}
+    def get_analyze_profitability_margin(self):
+        pass
+    
+    #5 성장성 분석
+    #열 값은 3.1과 같으며, {총자산증가율,유형자산증가율,유동자산증가율,자기자본증가율,매출액 증가율}
+    def get_analyze_growth(self):
+        pass
+
+    #6 활동성 분석
+    #열 값은 3.1과 같으며, {총자산회전율,자기자본회전율,자본금회전율,경영자산회전,비유동자산회전율,유형자산회전율,재고자산회전율,제품회전율,매출채권회전율}
+    def get_analyze_activity(self):
+        pass
+
 
 #리포트_투자지표
 class ReportInvestmentIndex():
