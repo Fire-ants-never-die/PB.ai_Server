@@ -9,9 +9,19 @@ from program_tool import *
 # 반환값은 json으로 쉽게 변경하기 위하여 가급적 dictionay 형으로 반환합니다. (값 하나만 출력하는거면 int,str)
 # 미완성 메서드는 주석에 ***를 붙입니다. 
 
+#메인 홈 입니다.
+#주식회사 검색시스템인데..회사 로고는 크롤링이 안되어 있으므로, 로고는 제외하고 {key회사명 : value티커} 형태의 dict로 반환합니다. 
+class Home():
+    def __init__(self) -> None:
+        self.data_controller = DataController()
+        self.krx = KrxCrawler()
+
+        #krx에서 불러온 오늘 주가데이터로 이름/티커 반환 메서드 작성해야 함!!
+        
+
 #report에 들어갈 데이터 객체 한 번에 생성. 리포트 안의 5가지 탭을 오갈 때, 중복 처리 하지 않기 위해서 딱 한번만 불러옵니다.
 #프/백 개발자는 이 클래스만 쓰면 됩니다!! + AI 클래스 하나 더.
-class report():
+class Report():
     def __init__(self,company_name) -> None:
         #전부 싱글톤 객체입니다.
         self.krx = KrxCrawler()
@@ -42,14 +52,16 @@ class report():
     
 
 #리포트 기업 오버뷰 (krx 크롤링이 포함됩니다.)
-class ReportOverview(report):
+class ReportOverview():
     # company_name은 ticker, 이름 둘 다 가능합니다.
     def __init__(self,name,ticker,market_data):
         self.name = name
         self.ticker = ticker
         self.company_market_data = market_data
+        self.data_controller = DataController()
+        self.current_year = DateTimeManager().formatted_year
     #1 기업 프로필 ***
-    #[시가총액 상장일자x 설립일자 종업원수x 대표이사 발행주식수 주요계열사x] 딕셔너리로 반환
+    #{시가총액 상장일자x 설립일자 종업원수x 대표이사 발행주식수 주요계열사x} 딕셔너리로 반환
     # 현재 위 리스트의 x 항목을 크롤 할 방법을 찾아야 함.
     def get_company_profile(self) -> dict:
         info_dict = {}
@@ -81,8 +93,8 @@ class ReportOverview(report):
         for i in range(5):
             year_dict = {}
             target_year = int(self.current_year) - i
-            b_dict = df_b[df_b['year'] == target_year].to_dict('records')
-            i_dict = df_i[df_i['year'] == target_year].to_dict('records')
+            b_dict = df_b[df_b['year'] == target_year].to_dict('records') # type: ignore
+            i_dict = df_i[df_i['year'] == target_year].to_dict('records') # type: ignore
             for key in item_list:
                 if key in b_dict:
                     year_dict[key] = format_number(int(b_dict[key])) # type: ignore
@@ -135,8 +147,8 @@ class ReportFinancialAnalyze():
             year_format_dict = {}
             year_real_dict = {}
             target_year = int(self.current_year) - i
-            b_dict = df_b[df_b['year'] == target_year].to_dict('records')
-            i_dict = df_i[df_i['year'] == target_year].to_dict('records')
+            b_dict = df_b[df_b['year'] == target_year].to_dict('records') # type: ignore
+            i_dict = df_i[df_i['year'] == target_year].to_dict('records') # type: ignore
             for key in item_list:
                 if key in b_dict:
                     year_format_dict[key] = format_number(int(b_dict[key])) # type: ignore
