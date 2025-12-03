@@ -41,7 +41,8 @@ class DateTimeManager():
 
     def __init__(self):
         self.set_time()
-
+    
+    #하루가 바뀌면 자동호출되어야함
     def set_time(self):
         self.now = datetime.datetime.now()
         #format
@@ -56,6 +57,9 @@ class DateTimeManager():
         past_time = self.now - datetime.timedelta(days=date)
         formatted_past_time = past_time.strftime("%Y%m%d")
         return formatted_past_time
+
+def get_current_time() -> str:
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 #debuger
