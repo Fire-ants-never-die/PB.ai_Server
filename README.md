@@ -83,6 +83,7 @@ DB002 (5개년 재무상태표 파싱) : 구현 시작 안함. DB001에 api 호�
 2.json  : json                                         메타 데이터 관리
 3.pandas                                               데이터 가공
 4.openai                                               gpt 연결, 임베딩 api
+5.chromadb                                             임베딩 벡터 저장을 위한 벡터db
 5.tiktoken                                             open api 사용을 위한 토큰 분리
 6.financedatareader : pip install finance-datareader   주가정보크롤링1
 7.pykrx : pip install pykrx                            주가정보크롤링2
