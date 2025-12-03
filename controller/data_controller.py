@@ -5,13 +5,65 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from program_tool import *
 
 
+#ai agent의 질답을 보관하는 user data controller 입니다.
+#data/user_ai_qna.db   qa_logs 테이블에 질답이 저장됩니다.
+# 클라이언트 식별 id, 질문 ,답변, 생성일자가 저장됩니다. 생성일자는 "%Y-%m-%d %H:%M:%S" 형식으로 저장됩니다.
+@singleton
+class UserDataController:
+    
+    def __init__(self) -> None:
+        dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+        path = os.path.join(dir,"data/user_ai_qna.db")
+        self.con = sqlite3.connect(path)
+        self.cursor = self.con.cursor()
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS qa_logs (
+            client_id TEXT PRIMARY KEY,
+            question TEXT,
+            answer TEXT,
+            created_time TEXT
+            )
+            """)
+        self.con.commit()
+    
+    def set_qna(self,client_id, question, answer, created_time):
+        try:
+            self.cursor.execute("""
+                                INSERT INTO qa_logs (client_id, question, answer, created_time)
+                                VALUES (?, ?, ?, ?)
+                                """,(client_id, question, answer, created_time))
+            self.con.commit()
+        except:
+            Debuger.printc("데이터 저장 실패")
+    
+    def get_qna(self,client_id) -> list[tuple]:
+        try:
+            self.cursor.execute("""
+                SELECT client_id, question, answer, created_time
+                FROM qa_logs
+                WHERE client_id = ?
+                ORDER BY created_at DESC
+                """, (client_id,))
+        except:
+            Debuger.printc("데이터 조회 실패")
+        
+        return self.cursor.fetchall()
+
+        
+
+
 @singleton
 class DataController:
 
     def __init__(self) -> None:
         #DB path
-        self.pathtype = {"extracted":"data/extracted.db","raw":"data/raw.db","market":"data/market.db"}
-        self.meta_path = "data/meta/"
+        dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+        path_name = ["extracted","raw","market"]
+        self.pathtype = {}
+        for name in path_name:
+            self.pathtype[name] = os.path.join(dir,f"data/{name}.db")
+
+        self.meta_path = os.path.join(dir,"data/meta/")
     
     def create_table(self,df:pd.DataFrame,dbtype:str,table_name:str,append:bool = True): #dbtype : "extracted", "raw", "market"
         con = sqlite3.connect(self.pathtype[dbtype])
