@@ -2,6 +2,47 @@ from program_tool import *
 import json, sys,os,pandas as pd
 import tiktoken
 
+
+#api에 들어갈 토큰 길이를 카운팅합니다.
+#임베딩은 입력 토큰 길이가 500~1000로 제한할 것입니다.
+#token 측정은 모델별로 상이합니다.
+def token_counter(text) -> int:
+    enc = tiktoken.get_encoding("cl100k_base")
+    return len(enc.encode(text))
+
+#정해지지 않은 형식의 dictionary data 청킹 함수
+def chunk_dict_data(data:dict) -> list:
+    res = [] 
+
+    #재귀 탐색 함수
+    def rescursive_search(dict_data,keys):
+        for key,value in dict_data.items():
+            current_key = keys + [key]
+            if type(value) == dict:
+                rescursive_search(value,current_key)
+            #value가 dictionary가 아니라면, list거나 ㄹㅇvalue 일 것이므로 [key1,key2...] : value 형식으로 텍스트 저장
+            else:
+                adress = ""
+                for i in range(len(current_key)):
+                    adress += str(current_key[i])
+                    if i != len(current_key) - 1:
+                        adress += ","
+                    else:
+                        adress += ": "
+                if type(value) == list:
+                    adress += "["
+                    for i in range(len(value)):
+                        adress += str(i)
+                        if i != len(value) - 1:
+                            adress += ","
+                        else:
+                            adress += "]"
+                else:
+                    adress += str(value)
+                res.append(adress)
+    rescursive_search(data,[])
+    return res
+
 class Chunking:
 
     def __init__(self,df:pd.DataFrame,company_name,table_name):
@@ -11,14 +52,7 @@ class Chunking:
         self.chunk = ""
 
         self.df_to_text_chunks(df,company_name,table_name)
-        self.len = self.token_counter(self.chunk)
-
-    #api에 들어갈 토큰 길이를 카운팅합니다.
-    #임베딩은 입력 토큰 길이가 500~1000로 제한할 것입니다.
-    #token 측정은 모델별로 상이합니다.
-    def token_counter(self,text) -> int:
-        enc = tiktoken.get_encoding("cl100k_base")
-        return len(enc.encode(text))
+        self.len = token_counter(self.chunk)
 
     #private
     #아래 형식의 dataframe을 str형의 청크로 바꿔줍니다. token은 
@@ -50,4 +84,11 @@ class Chunking:
             text += data_text
             text += "\n"
             self.chunk += text
+
+
+def _test():
+    data = {"jinu" : {"age" : 24, "height" : 175, "hobby": {"bad" : "game", "good" : "coding" }}, "today":"1203"}
+    print(chunk_dict_data(data))
+if __name__ == "__main__":
+    _test()
 
