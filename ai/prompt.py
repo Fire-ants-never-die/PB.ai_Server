@@ -30,8 +30,10 @@ class ChatSession:
                     "gpt-5-mini"   : 400000,  # 0.25 / 2.0   # 고급형이지만...질문 저장공간이 적음
                     "gpt-5-nano"   : 400000   # 0.05 / 0.4
                 }   
-    def __init__(self,user_id,model_name : str = "gpt-4.1-nano"):
+    #유저 식별 id, 기업과탭이름 (농심 Overview, 농심 주식가치평가 등), gpt모델 (default는 4.1nano)
+    def __init__(self,user_id,company, tab_name,model_name : str = "gpt-4.1-nano"):
         self.model  = model_name
+        self.company_tab_name = company + " " + tab_name
         self.gpt = GPT()
         self.client = self.gpt.client
         self.user_id = user_id
@@ -43,6 +45,7 @@ class ChatSession:
         self.log_data = UserDataController()
 
         #대화 기록용 리스트. 첫 dict는 사전 프롬프트 (meta.json 의 system-content)
+        self.gpt.system_content = f"너는 회사 '{company}'의" + self.gpt.system_content
         self.msg_list = [{"role":'system',"content":self.gpt.system_content}]
 
         #질문 개수 카운팅
@@ -72,7 +75,7 @@ class ChatSession:
         self.token_cnt += response.usage.total_tokens # type: ignore
 
     
-        self.log_data.set_qna(self.user_id,question,answer,datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        self.log_data.set_qna(self.user_id,question,answer,self.company_tab_name,datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
         return answer # type: ignore
 
