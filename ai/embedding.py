@@ -1,28 +1,55 @@
 from program_tool import *
 import json, sys,os,pandas as pd
 from openai import OpenAI
-from chunking import Chunking,chunk_dict_data
-from prompt import GPT
+
+from ai.chunking import Chunking,chunk_dict_data
+from ai.prompt import GPT
 import chromadb
 
-@singleton
 class Embedding:
 
     CHUNK_LENGTH = 1000
-
-    def __init__(self):
+    #질문과 , 탭정보(context_dict) 임베딩
+    def __init__(self,question,context_dict:dict):
         gpt = GPT()   
         self.client = gpt.client
+        self.question = question
+        self.context_dict = context_dict
+        # ====[답변 품질에 영향을 주는 변수] ===
+        self.model= "text-embedding-3-small"
+        self.k = 3   #이전 질답 최대 self.k 개만큼 가져와서 임베딩
 
     #임베딩 & 로컬 메모리 저장 (사용자 질문 임베딩, 리포트 임베딩)
     #인자로 들어가는 정보들은, 불규칙적 일 가능성이 높습니다.
     # 따라서 청킹은 dictionary기반의 key:value형태로 잘라지되, value 또한 dictionay일 가능성이 있으므로
     # chunking.py에서 chunking이 재귀적으로 이루어집니다. 
-    def embedding_on_memory(self,data,model_name:str = "text-embedding-3-small"):
-        chunk = chunk_dict_data(data)
-        embeddings = [self.client.embeddings.create(model=model_name,input=t).data[0].embedding for t in chunk] # type: ignore
-        chroma = chromadb.Client()
-        
+    def get_context(self) -> str:
+        chunk = chunk_dict_data(self.context_dict)
+        vector = [self.client.embeddings.create(model=self.model,input=t).data[0].embedding for t in chunk] # type: ignore
+        try:
+            chroma = chromadb.Client()
+            collection = chroma.get_or_create_collection(name = "temp")
+            for i ,(t,e) in enumerate(zip(chunk,vector)):
+                collection.add(documents=[t],embeddings=[e],ids=[str(i)])
+            
+            q_emb = self.client.embeddings.create(model = self.model ,input=self.question).data[0].embedding # type: ignore
+            results = collection.query(query_embeddings=[q_emb],n_results=self.k, include=["documents","distances","metadatas"])
+
+            context = "\n".join(results["documents"][0]) # type: ignore
+
+            #===debug===
+            kk = ["documents","distances","metadatas"]
+            print(f"질문:{self.question}")
+            # print("검색된 데이터:")
+            # for i in range(3):
+            #     print(f"데이터 {i}번 : {results[kk[i]][i]}")
+            #     print(f"distance {i}번 : {results[kk[i]][i]}")
+            #     print(f"metadata {i}번 : {results[kk[i]][i]}")
+
+            return "\n검색된 데이터:\n" + context
+        except:
+            Debuger.printc("RAG구성 실패")
+            return "검색된 데이터는 없습니다."
 
         
     #임베딩 & 주기억장치 저장 (db_folder)
@@ -46,7 +73,7 @@ class Embedding:
             company = company_table_list[idx][0]; table = company_table_list[idx][1]
             #청킹하고 1200개 미만이면 병합 1200개 넘으면 새로 
             chunk = Chunking(df_list[idx],company,table)
-            if last_chunk_size + chunk.len >= RAG.CHUNK_LENGTH * 1.2:
+            if last_chunk_size + chunk.len >= Embedding.CHUNK_LENGTH * 1.2:
                 chunked.append(last_chunk)
                 last_chunk = chunk
             else:
