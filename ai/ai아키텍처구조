@@ -1,51 +1,38 @@
-===[전처리]===
-
-재무제표 DataFrame
-       ↓ 
-청킹 (청킹 길이 미정. 500~1500 사이 예상)
-       ↓ 
-임베딩 (open ai embedding api, 모델 미정. 일단embedding-small)
-       ↓
-벡터DB(Faiss/Chroma/Pinecone...일단은 chroma로)
-
-
-
 
 ===[사용자 질문 (이하 쿼리)]===
 
-쿼리 입력 → 쿼리 임베딩
+쿼리 입력(질문,유저구분(무료,유료버전들),탭 객체)과 RAG 구성 : 질문,탭 정보 청킹(잘게쪼게기)후 각각 임베딩
        ↓
-벡터 DB 유사 문서 검색 (top-k)
+벡터 DB 유사 문서 검색 (top-k) : 질문정보에 쓰일만한 정보 추출 
        ↓
-프롬프트 삽입
+질답 데이터베이스에서 최대 N개 까지 이전 질답 가져오고, 추출된 정보, 현재 질문과 함께 gpt api 에 전달
        ↓
-답변 생성 (open ai gpt api. 모델 미정)
+답변 생성 (open ai gpt api. 모델 미정) : 답변 생성, 질답 정보에 기록
 
 
 ===[데이터베이스]===
-1.사용자 답변은 ai/data/user.db에 저장됩니다.
+1.사용자 질답은 ai/data/user.db 의 qa_logs 테이블에 저장됩니다.  **company_tab_name에서 company 이름은 한글 이름으로 통일  *created_time은 초단위로 저장
+칼럼명
+user_id / question / answer / company_tab_name / created_time
+칼럼 ex)
+gildong_1234  "아버지를 어떻게 불러야 하나요"   "길동은 아버지를 아버지라고 부르면 안됩니다"  "삼성 주식가치평가" "2025-12-06 02:25:27"
+
 2.chroma db (임베딩 벡터 db)
+일단은...로컬메모리로 벡터 db 구성.
 
 
-
-
-**
+===[개발 예정/참고/필요 사항] ===
 사용자 질문처리 흐름에서, gpt에게 사전 프롬프트 엔지니어링이 필요할 것 같습니다.
-1. AI 정체성
-2. 말투...
-3. overview의 5개 항목 각각별로 추천질문 뽑아줘. 
-4. 
-
-ex) 
-"당신은 재무 분석, "
-""
+1. AI 정체성 / 말투
+2. RAG 품질 
+3. 추천질문 생성기능
 
 
-===[ai agent 서비스 플로우]===
+===[ai agent 서비스 플로우 구체적인 설명]===
 UserDataController 싱글톤 객체 준비
 
 1) 사용자가, 특정 탭(Overviw, 주식가치분석)에서 ai agent에 질문 입력
-main.py -> ai = AIChattingQueueController() 싱글톤 객체 생성. 
+main.py -> ai = AIChattingQueueController() 싱글톤 객체 생성.
 ai.ask(유저id,리포트 탭객체,"질문내용")
 sqlite3 User_ai_qna.db의 questions 테이블의 (유저id,질문,리포트탭 정보,날짜) 를 저장
 
