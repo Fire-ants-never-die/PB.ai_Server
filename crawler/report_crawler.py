@@ -1,7 +1,7 @@
 import pandas as pd
 import OpenDartReader
 from tqdm import tqdm
-from krx_crawler import KrxCrawler
+from crawler.krx_crawler import KrxCrawler
 import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from program_tool import *
@@ -276,8 +276,8 @@ class ReportCrawler():
             for dy in range(1,4):
                 year = current_year - dy
                 weight = 4 - dy
-                bdict = bdataframe[bdataframe['year'] == str(year) + "Q4"].to_dict('records')[0]
-                idict = idataframe[idataframe['year'] == str(year) + "Q4"].to_dict('records')[0]
+                bdict = bdataframe[bdataframe['year'] == str(year) + "Q4"].to_dict('records')[0] # type: ignore
+                idict = idataframe[idataframe['year'] == str(year) + "Q4"].to_dict('records')[0] # type: ignore
 
                 for key,value in bdict.items():
                     if key == 'year':
