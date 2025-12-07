@@ -7,7 +7,8 @@ from program_tool import *
 
 #ai agent의 질답을 보관하는 user data controller 입니다.
 #data/user_ai_qna.db   qa_logs 테이블에 질답이 저장됩니다.
-# 클라이언트 식별 id, 질문 ,답변, 생성일자가 저장됩니다. 생성일자는 "%Y-%m-%d %H:%M:%S" 형식으로 저장됩니다.
+# 클라이언트 식별 id, 질문 ,답변, 회사와 탭이름, 생성일자가 저장됩니다. 생성일자는 "%Y-%m-%d %H:%M:%S" 형식으로 저장됩니다.
+# ex) 식별id, "유동자산이뭔가요" ,"유동자산은 ~입니다", "농심 Overview", "2025-10-31-13:33:21"
 @singleton
 class UserDataController:
     
@@ -18,39 +19,90 @@ class UserDataController:
         self.cursor = self.con.cursor()
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS qa_logs (
-            client_id TEXT PRIMARY KEY,
+            user_id TEXT,
             question TEXT,
             answer TEXT,
+            company_tab_name TEXT,
             created_time TEXT
             )
             """)
         self.con.commit()
+        
+        #Deprecated
+        # self.cursor.execute("""
+        #     CREATE TABLE IF NOT EXISTS questions (
+        #     user_id TEXT PRIMARY KEY,
+        #     question TEXT,
+        #     company_tab_name TEXT,
+        #     created_time TEXT
+        #     )
+        #     """)
+        # self.con.commit()
     
-    def set_qna(self,client_id, question, answer, created_time):
+    def set_question(self,user_id,question,company_tab_name,created_time):
         try:
             self.cursor.execute("""
-                                INSERT INTO qa_logs (client_id, question, answer, created_time)
+                                INSERT INTO questions (user_id, question, company_tab_name, created_time)
                                 VALUES (?, ?, ?, ?)
-                                """,(client_id, question, answer, created_time))
+                                """,(user_id, question, company_tab_name,created_time))
+            self.con.commit()
+        except:
+            Debuger.printc("질문 데이터 저장 실패. 질답 처리가 완료되기 전에 여러번 질문을 입력해서 primary key인 id가 중복되었을 가능성")
+
+    def pop_question(self,user_id) -> tuple:
+        try:
+            self.cursor.execute("SELECT * FROM questions WEHRE user_id = ?",(user_id,))
+            res = self.cursor.fetchone()
+            self.con.commit()
+
+            return res
+        except:
+            Debuger.printc("질문 데이터 로딩 실패")
+        
+            return ()
+    
+    
+    def set_qna(self,user_id, question, answer, company_tab_name,created_time):
+        try:
+            self.cursor.execute("""
+                                INSERT INTO qa_logs (user_id, question, answer, company_tab_name, created_time)
+                                VALUES (?, ?, ?, ?, ?)
+                                """,(user_id, question, answer, company_tab_name,created_time))
             self.con.commit()
         except:
             Debuger.printc("데이터 저장 실패")
     
-    def get_qna(self,client_id) -> list[tuple]:
+    def get_qna(self,user_id, company_tab_name) -> list[tuple]:
+        res = []
         try:
             self.cursor.execute("""
-                SELECT client_id, question, answer, created_time
+                SELECT user_id, question, answer, company_tab_name,created_time
                 FROM qa_logs
-                WHERE client_id = ?
-                ORDER BY created_at DESC
-                """, (client_id,))
+                WHERE user_id = ? AND company_tab_name = ?
+                ORDER BY created_time DESC
+                """, (user_id,company_tab_name))
+            res = self.cursor.fetchall() 
+        except Exception as e:
+            Debuger.printc(f"데이터 조회 실패 : {e}")
+        
+        return res
+
+    #채팅라이브러리 탭에서 쓰이는 메서드입니다.
+    #한 유저의 모든 채팅 세션을 불러옵니다.
+    def get_sessions(self,user_id) -> list[tuple]:
+        res = []
+        try:
+            self.cursor.execute("""
+                SELECT user_id, session_id, question, answer, company_tab_name,created_time
+                FROM qa_logs
+                WHERE user_id = ?
+                ORDER BY session_id
+                """, (user_id,))
+            res = self.cursor.fetchall() 
         except:
             Debuger.printc("데이터 조회 실패")
-        
-        return self.cursor.fetchall()
 
-        
-
+        return res
 
 @singleton
 class DataController:
