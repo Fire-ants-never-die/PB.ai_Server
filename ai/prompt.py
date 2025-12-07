@@ -31,59 +31,60 @@ class ChatSession:
                     "gpt-5-nano"   : 400000   # 0.05 / 0.4
                 }   
     #유저 식별 id, 기업과탭이름 (농심 Overview, 농심 주식가치평가 등), gpt모델 (default는 4.1nano)
-    def __init__(self,user_id,company, tab_name,model_name : str = "gpt-4.1-nano"):
-        self.model  = model_name
+    def __init__(self,question:str,user_id,company, tab_name,model_name : str = "gpt-4.1-nano"):
+        self.model  = model_name; self.company = company; self.question = question
         self.company_tab_name = company + " " + tab_name
         self.gpt = GPT()
         self.client = self.gpt.client
         self.user_id = user_id
         if self.client == None:
-            Debuger.printc("openAI 이 없습니다.")
+            Debuger.printc("openAI 가 연결이 안되어 있습니다.")
             return
-        
+
+    #지난 채팅 추가해서 질답기억하게 하기 (비어있어도 상관없음)
+    # key : "XXXX년 X월 X일" , value : {key ("question") : value(질문데이터) , key ("answer") : value (답변 데이터) } 
+    def append_chatting_library(self):
+
+        chat_list = self.log_data.get_qna(self.user_id,self.company_tab_name)
+        if len(chat_list) == 0:
+            return
+
+        #최근 질답 3개만 불러오기
+        cnt = 3
+        for chat in chat_list:
+            #chat : (user_id, question, answer, datetime(str))
+            #최신순으로 불러와집니다.
+            cnt -= 1
+            
+            self.msg_list.append({"role":'user', "content" :chat[1]})
+            self.msg_list.append({"role":'assistant', "content" :chat[2]})
+
+            if cnt == 0:
+                break
+
+    #질답 모두 string
+    async def ask(self) -> str:
         #질답 db 저장을 위한 data controller 싱글톤 객체
         self.log_data = UserDataController()
 
         #대화 기록용 리스트. 첫 dict는 사전 프롬프트 (meta.json 의 system-content)
-        self.gpt.system_content = f"너는 회사 '{company}'의" + self.gpt.system_content
+        self.gpt.system_content = f"너는 회사 '{self.company}'의" + self.gpt.system_content
         self.msg_list = [{"role":'system',"content":self.gpt.system_content}]
+        #지난 질답 추가
+        self.append_chatting_library()
 
-        #질문 개수 카운팅
-        self.ask_cnt = 0
-
-        #토큰 카운팅
-        self.token_cnt = 0
-        #마지막 토큰 길이
-        self.last_token = 0
-
-    #질답 모두 string
-    #프롬프트 한도 근접시, "Token Limit Error" 반환
-    def ask(self,question:str) -> str:
-        
-        limit_check = self.__check_token_limit()
-        if limit_check == False:
-            return "Token Limit Error"
-
-        self.ask_cnt += 1       
-
-        self.msg_list.append({'role':'user',"content":question})
+        self.msg_list.append({'role':'user',"content":self.question})
         response = self.client.chat.completions.create(model = self.model, messages=self.msg_list) # type: ignore
         answer = response.choices[0].message.content
         self.msg_list.append({'role':'user',"content":answer})
 
-        self.last_token = response.usage.total_tokens # type: ignore
-        self.token_cnt += response.usage.total_tokens # type: ignore
 
-    
-        self.log_data.set_qna(self.user_id,question,answer,self.company_tab_name,datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        self.log_data.set_qna(self.user_id,self.question,answer,self.company_tab_name,datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
         return answer # type: ignore
 
-    def __check_token_limit(self):
-        if (self.token_cnt + self.last_token * 2) >= self.model_info[self.model]:
-            return False
-        else:
-            return True
+       
+
 
 def __debug():
     """
