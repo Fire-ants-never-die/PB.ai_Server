@@ -38,8 +38,8 @@ class Embedding:
             context = "\n".join(results["documents"][0]) # type: ignore
 
             #===debug===
-            kk = ["documents","distances","metadatas"]
-            print(f"질문:{self.question}")
+            # kk = ["documents","distances","metadatas"]
+            # print(f"질문:{self.question}")
             # print("검색된 데이터:")
             # for i in range(3):
             #     print(f"데이터 {i}번 : {results[kk[i]][i]}")
