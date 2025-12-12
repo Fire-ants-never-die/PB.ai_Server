@@ -54,7 +54,7 @@ class Embedding:
             Debuger.printc("RAG구성 실패")
             return "검색된 데이터는 없습니다."
 
-        
+    #Deprecated (위의 메서드 get_context로 일단 대신합니다.)
     #임베딩 & 주기억장치 저장 (db_folder)
     #db에서 불러온 데이터프레임을 리스트화 하고, 각 데이터프레임에 맞는 [회사이름,테이블이름] 리스트를
     #df_list 와 company_table_list로 집어넣습니다.
