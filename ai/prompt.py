@@ -1,4 +1,4 @@
-from openai import OpenAI
+from openai import AsyncOpenAI
 from program_tool import *
 import json ,os,sys, datetime
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
@@ -16,7 +16,7 @@ class GPT:
         __api_key= self.meta["api_key"]
 
         try:
-            self.client = OpenAI(api_key=__api_key)
+            self.client = AsyncOpenAI(api_key=__api_key)
         except:
             self.client = None
             Debuger.printc("openAI연결 실패")
@@ -74,10 +74,9 @@ class ChatSession:
         self.append_chatting_library()
 
         self.msg_list.append({'role':'user',"content":self.question})
-        response = self.client.chat.completions.create(model = self.model, messages=self.msg_list) # type: ignore
+        response = await self.client.chat.completions.create(model = self.model, messages=self.msg_list) # type: ignore
         answer = response.choices[0].message.content
         self.msg_list.append({'role':'user',"content":answer})
-
 
         self.log_data.set_qna(self.user_id,self.question,answer,self.company_tab_name,datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
