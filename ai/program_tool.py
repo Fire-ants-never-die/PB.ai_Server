@@ -61,6 +61,29 @@ class DateTimeManager():
 def get_current_time() -> str:
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+#메모리 출력함수 byte 단위입니다.
+from collections import deque
+import sys
+
+def get_byte(obj, unit:str = "mb",seen=None) -> int:
+    #객체의 실제 메모리 사용량을 재귀적으로 계산.
+    size = sys.getsizeof(obj)
+    if seen is None:
+        seen = set()
+
+    obj_id = id(obj)
+    if obj_id in seen:
+        return 0
+    seen.add(obj_id)
+
+    # 컨테이너 타입이면 내부 요소도 모두 더하기
+    if isinstance(obj, dict):
+        size += sum((get_byte(k, unit,seen) + get_byte(v,unit,seen)) for k, v in obj.items())
+    elif isinstance(obj, (list, tuple, set, frozenset, deque)):
+        size += sum(get_byte(i, unit,seen) for i in obj)
+        
+    return size
+
 
 #debuger
 class Debuger():
