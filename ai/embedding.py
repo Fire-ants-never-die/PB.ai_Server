@@ -1,7 +1,5 @@
 from program_tool import *
-import json, sys,os,pandas as pd
-from openai import OpenAI
-
+import pandas as pd
 from ai.chunking import Chunking,chunk_dict_data
 from ai.prompt import GPT
 import chromadb
@@ -23,16 +21,21 @@ class Embedding:
     #인자로 들어가는 정보들은, 불규칙적 일 가능성이 높습니다.
     # 따라서 청킹은 dictionary기반의 key:value형태로 잘라지되, value 또한 dictionay일 가능성이 있으므로
     # chunking.py에서 chunking이 재귀적으로 이루어집니다. 
-    def get_context(self) -> str:
+    async def get_context(self) -> str:
         chunk = chunk_dict_data(self.context_dict)
-        vector = [self.client.embeddings.create(model=self.model,input=t).data[0].embedding for t in chunk] # type: ignore
+        vector = []
+        for t in chunk:
+            res = await self.client.embeddings.create(model=self.model,input=t) # type: ignore
+            vec = res.data[0].embedding
+            vector.append(vec)
         try:
             chroma = chromadb.Client()
             collection = chroma.get_or_create_collection(name = "temp")
             for i ,(t,e) in enumerate(zip(chunk,vector)):
                 collection.add(documents=[t],embeddings=[e],ids=[str(i)])
             
-            q_emb = self.client.embeddings.create(model = self.model ,input=self.question).data[0].embedding # type: ignore
+            q_emb_coroutine = await self.client.embeddings.create(model = self.model ,input=self.question) # type: ignore
+            q_emb = q_emb_coroutine.data[0].embedding # type: ignore
             results = collection.query(query_embeddings=[q_emb],n_results=self.k, include=["documents","distances","metadatas"])
 
             context = "\n".join(results["documents"][0]) # type: ignore
