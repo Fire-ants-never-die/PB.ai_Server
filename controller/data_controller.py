@@ -146,6 +146,20 @@ class DataController:
             # 이미 존재하는 값일 가능성 큼.
             pass
         con.close()
+    
+    def create_table_set_key_from_dict(self,dt:dict,dbtype:str,table_name:str,key_name:str,replace:bool = False):
+        con = sqlite3.connect(self.pathtype[dbtype])   
+        name_property = f"'{key_name}' TEXT PRIMARY KEY, "
+        for key in dt.keys():
+            if key == key_name:
+                continue
+            name_property += f"'{key}' TEXT, "
+        name_property = name_property[:-2] #맨 마지막 쉼표 제거하는 코드입니다.
+
+        sql_order = f"CREATE TABLE IF NOT EXISTS '{table_name}' ({name_property})"
+        cursor = con.cursor()
+        cursor.execute(sql_order)
+        con.close()
 
     def read_table(self,dbtype:str,table_name:str)->pd.DataFrame:
         con = sqlite3.connect(self.pathtype[dbtype])
