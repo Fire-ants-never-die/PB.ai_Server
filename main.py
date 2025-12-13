@@ -14,13 +14,33 @@ from program_tool import *
 class Home():
     def __init__(self) -> None:
         self.data_controller = DataController()
+        self.datetime = DateTimeManager()
         self.krx = KrxCrawler()
 
-        #krx에서 불러온 오늘 주가데이터로 이름/티커 반환 메서드 작성해야 함!!
+    #시장 상황 최신화하고 반환합니다. (data/market.db 의 "%Y%m%d"형식의 날짜를 테이블 이름으로 아래 정보를 최신화합니다)
+    #반환형식 : {"name" : [Code, Market Dept...], "name":[]...}
+    # 'Code','Name','Market','Dept','Open','High','Low','Close','Volume','Marcap','Stocks' 
+    # 번역 :  티커, 주식이름, 상장된 시장, 
+    def update_market_info(self) -> dict:
+        df = self.krx.update_market_info()
+        res = df.set_index("Name").to_dict(orient='index')
+        #아래는 key값이 티커. 티커로도 검색하는 기능 개발이 용이하려면 이것도 반환해서 저장하는게 좋을 듯합니다.
+        #res_ticker = df.set_index("Code").to_dict(orient='index')
+        return res
+    
+    #업데이트 없이 db에서 찾아서 그냥 반환. (최신화를 하지 않음. 근데 오늘 날짜 테이블 없으면 최신화해서 가져옵니다)
+    def get_market_info(self) ->dict:
+        try:
+            df = self.data_controller.read_table("market",self.datetime.formatted_today)
+            return df.set_index("Name").to_dict(orient='index')
+        except:
+            res = self.update_market_info()
+            return res
+        
 
 
 #report에 들어갈 데이터 객체 한 번에 생성. 리포트 안의 5가지 탭을 오갈 때, 중복 처리 하지 않기 위해서 딱 한번만 불러옵니다.
-#프/백 개발자는 이 클래스만 쓰면 됩니다!! + AI 클래스 하나 더.
+#프/백 개발자는 탭에 필요한 정보 불러올때  이 클래스만 쓰면 됩니다!! . 1.위에있는 Home 객체, 2.Report 객체, 3.ai_main 함수 이렇게 3개만 신경쓰면 되도록 하는게 목표
 class Report():
     def __init__(self,company_name) -> None:
         #전부 싱글톤 객체입니다.
