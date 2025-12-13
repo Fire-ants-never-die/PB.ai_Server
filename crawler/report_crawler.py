@@ -331,6 +331,83 @@ class ReportCrawler():
                 tickermeta = f"{year - dy}{ticker}Q{quarter}"
                 tickermetalist.append(tickermeta)
         self.crawl_finstate_by_tickermetalist(tickermetalist)
+    
+    #개황정보/기타정보 크롤링
+    def _crawl_company(self,ticker) -> dict:
+        #크롤성공여부
+        is_company_sucess = True
+        is_worker_sucess = True
+        try:
+            c_dict = self.dart.company(ticker)
+        except:
+            Debuger.printc("company data 크롤 실패")
+            is_company_sucess = False
+        try:
+            df = self.dart.report(ticker,'직원',str(int(self.datetime.formatted_year)-1))
+        except:
+            Debuger.printc("종업원수 데이터 크로링 실패")
+            is_worker_sucess = False
+
+
+        
+        company_dict = {}
+
+        #직원 수 파싱
+        # filtered = df[df["fo_bbm"] != "합계" or df["fo_bbm"] != "성별합계" or df["fo_bbm"] != "성별 합계"]
+        # member_num = filtered["rgllbr_co"].sum()
+        member_num = 0
+        if is_worker_sucess:
+            ms_list = df.loc[~df["fo_bbm"].isin(["합계","성별합계","성별 합계"]),"rgllbr_co"].tolist()
+            for ms in ms_list:
+                member_num += int(ms.replace(",",""))
+
+
+        #개황정보 파싱
+        company_key_dict = {
+            "stock_code" : "티커", #티커
+            "corp_code" : "고유번호", #고유번호
+            "corp_name" : "기업이름", #기업 이름
+            "corp_name_eng" : "기업영문", #기업 영문 이름
+            "stock_name" : "주식이름", #주식 이름 (상장된 이름)
+            "ceo_nm" : "CEO",    #ceo 이름
+            "corp_cls": "상장구분",   #법인 구분 (코스피,코스닥,코넥스,기타)
+            "adres" : "주소",   #주소  (key값이 adres 임에 주의)
+            "hm_url" : "홈페이지",  #회사 홈페이지
+            "induty_code" : "업종코드",  #업종 코드
+            "est_dt" : "설립일", #설립일 
+            "acc_mt": "결산월"   #결산월 ex) 12
+        }
+        market_name_dict = {"Y":"KOSPI","K":"KOSDAQ","N":"KONEX","E": "기타","NULL":"NULL"}
+        for k ,v in company_key_dict.items():
+            key_name = v
+            if is_company_sucess:
+                try:
+                    value = c_dict[k]
+                except:
+                    value = "NULL"
+                    Debuger.printc(f"{ticker} 회사의 {v}는 없음")
+            else:
+                value = "NULL"
+            if key_name == "상장구분":
+                value = market_name_dict[value]
+            company_dict[key_name] = value
+        company_dict["종업원수"] = member_num
+
+        #시가총액/ 발행주식수
+        cap = self.krx.get_market_cap(ticker)
+        company_dict["시가총액"] = cap[0]
+        company_dict["발행주식수"] = cap[1]
+
+        return company_dict
+
+    #개황정보/기타정보 시장단위 크롤링 후 db에 저장 ("ALL KOSPI KOSDAQ KONEX")
+    def crawl_company_from_market(self,market_name:str = "ALL"):
+        ticker_list = self.krx.get_market_list(market=market_name)
+        for ticker in progress(ticker_list,"개황정보/기타정보크롤링"):
+            c_dict = self._crawl_company(ticker)
+            
+            self.data_controller.create_table_set_key_from_dict(c_dict,"market","company","티커",True)
+
 
     #디버깅용 시험 메서드
     def test(self):
@@ -350,8 +427,11 @@ class ReportCrawler():
         # df3 = self.dart.finstate('005930, 000660, 005380', 2021)
         #self.data_controller.to_excel_test(df,"samsung2023")
 
-        a = self.dart.report('005930','직원',2024)
-        print(a)
+        # self.crawl_company_from_market("KOSPI")
+        code = self.dart.find_corp_code('097955')
+        print(code)
+        d = self.dart.company(code)
+        print(d)
 
             
         # self.crawl_market_report("KOSPI",4)
