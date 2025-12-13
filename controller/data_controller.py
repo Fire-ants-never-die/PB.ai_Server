@@ -14,7 +14,8 @@ class UserDataController:
     
     def __init__(self) -> None:
         dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
-        path = os.path.join(dir,"data/user_ai_qna.db")
+        path = os.path.join(dir,"data\\user_ai_qna.db")
+        print(path)
         self.con = sqlite3.connect(path)
         self.cursor = self.con.cursor()
         self.cursor.execute("""
@@ -27,17 +28,6 @@ class UserDataController:
             )
             """)
         self.con.commit()
-        
-        #Deprecated
-        # self.cursor.execute("""
-        #     CREATE TABLE IF NOT EXISTS questions (
-        #     user_id TEXT PRIMARY KEY,
-        #     question TEXT,
-        #     company_tab_name TEXT,
-        #     created_time TEXT
-        #     )
-        #     """)
-        # self.con.commit()
     
     def set_question(self,user_id,question,company_tab_name,created_time):
         try:
@@ -88,21 +78,60 @@ class UserDataController:
         return res
 
     #채팅라이브러리 탭에서 쓰이는 메서드입니다.
-    #한 유저의 모든 채팅 세션을 불러옵니다.
+    #한 유저의 모든 채팅 세션을 불러옵니다. (세션은 각 탭별로 하나씩 존재)
     def get_sessions(self,user_id) -> list[tuple]:
         res = []
         try:
+            param = [user_id]
             self.cursor.execute("""
-                SELECT user_id, session_id, question, answer, company_tab_name,created_time
+                SELECT user_id, question, answer, company_tab_name,created_time
                 FROM qa_logs
                 WHERE user_id = ?
-                ORDER BY session_id
-                """, (user_id,))
-            res = self.cursor.fetchall() 
-        except:
-            Debuger.printc("데이터 조회 실패")
+                ORDER BY created_time DESC
+                """, param)
+            res = self.cursor.fetchall()
+            
+        except Exception as e:
+            Debuger.printc(f"데이터 조회 실패 : {e}")
+        finally:
+            return res
 
-        return res
+    #채팅 라이브러리가 과도하게 쌓이는걸 대비하여 한 세션에서 remain개 빼고 모두 삭제할 수 있는 기능을 담은 메서드입니다   
+    #혹은 탭 세션 초기화할때도 사용 가능
+
+
+
+    # 작동ㅇ안함..ㅠㅠ 해결해야댐
+    def delete_session(self,user_id,company_tab_name,remain):
+        try:
+            param = [user_id,company_tab_name,remain,user_id,company_tab_name]
+            self.cursor.execute(f"""
+                DELETE FROM qa_logs 
+                WHERE ROWID NOT IN(
+                    SELECT ROWID FROM qa_logs
+                    WHERE user_id = ?
+                    AND company_tab_name = ?
+                    ORDER BY created_time DESC
+                    LIMIT ?
+                    )
+                AND user_id = ?
+                AND company_tab_name = ?
+                """,param)
+            self.con.commit()
+        except Exception as e:
+            Debuger.printc(f"세션 삭제 실패 : {e}")
+    
+    #테이블 행 크기 반환
+    def get_table_size(self):
+        try:
+            self.cursor.execute("SELECT COUNT(*) FROM qa_logs")
+            res = self.cursor.fetchone()[0]
+            return res
+        except Exception as e:
+            Debuger.printc(f"테이블 크기 조회 실패 {e}")
+            pass
+        
+
 
 @singleton
 class DataController:
@@ -286,6 +315,7 @@ class DataController:
     @staticmethod
     #ftype : Y(사업보고서), H(반기), Q1 (1분기)
     def get_raw_finstate_data(ticker: str, year:int, ftype : str)->pd.DataFrame:
+
         path = f"data/raw/{year}/Y{year}T{ticker}P{ftype}.feather"
         res = pd.DataFrame()
         try:
@@ -297,3 +327,18 @@ class DataController:
             print(f"{ticker}데이터를 불러오는 중 에러 발생 :",e)
 
         return res
+    
+
+def _debug():
+    udc = UserDataController()
+    # print(udc.get_table_size())
+
+    udc.delete_session("jinu","samsung 주식가치평가",4)
+
+    # fl = udc.get_sessions("apple")
+
+    print(udc.get_table_size())
+
+
+if __name__ == "__main__":
+    _debug()
