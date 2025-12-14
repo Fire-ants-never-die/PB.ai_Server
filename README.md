@@ -82,13 +82,13 @@ DB002 (5개년 재무상태표 파싱) : 구현 시작 안함. DB001에 api 호�
 
 ### 패키지 설치
 1.OpenDataReader : pip install opendartreader          재무데이터 크롤링
-2.json  : json                                         메타 데이터 관리
-3.pandas                                               데이터 가공
-4.openai                                               gpt 연결, 임베딩 api
-5.chromadb                                             임베딩 벡터 저장을 위한 벡터db
-5.tiktoken                                             open api 사용을 위한 토큰 분리
-6.financedatareader : pip install finance-datareader   주가정보크롤링1
-7.pykrx : pip install pykrx                            주가정보크롤링2
+2.json  : json              (이거 기본 패키지인가..?)     메타 데이터 관리
+3.pandas            pip install pandas                 데이터 가공
+4.openai            pip install opneai                 gpt 연결, 임베딩 api
+5.chromadb          pip install chromadb               임베딩 벡터 저장을 위한 벡터db
+5.tiktoken          pip install tiktoken               open api 사용을 위한 토큰 분리
+6.financedatareader pip install finance-datareader     주가정보크롤링1
+7.pykrx :           pip install pykrx                  주가정보크롤링2
 
 ### api key
 파일경로 아래에 data 폴더를 생성, data/meta.json 파일을 생성한다
