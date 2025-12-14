@@ -174,6 +174,7 @@ class DataController:
         except sqlite3.IntegrityError:
             # 이미 존재하는 값일 가능성 큼.
             pass
+        con.commit()
         con.close()
     
     def create_table_set_key_from_dict(self,dt:dict,dbtype:str,table_name:str,key_name:str,replace:bool = False):
@@ -188,6 +189,23 @@ class DataController:
         sql_order = f"CREATE TABLE IF NOT EXISTS '{table_name}' ({name_property})"
         cursor = con.cursor()
         cursor.execute(sql_order)
+
+        keys = "("
+        values = ""
+        rv = []
+        for k, v in dt.items():
+            keys += f"{k},"
+            rv.append(v)
+            values += "?,"
+        rt = tuple(rv)
+        keys = keys[:-1]
+        values = values[:-1]
+        keys += ")"
+    
+    
+        sql_order = f"INSERT OR REPLACE INTO {table_name} {keys} VALUES ({values})"
+        cursor.execute(sql_order,rt)
+        con.commit()       
         con.close()
 
     def read_table(self,dbtype:str,table_name:str)->pd.DataFrame:

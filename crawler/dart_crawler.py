@@ -51,7 +51,39 @@ class CodeCrawler(DartCrawler):
         df = pd.DataFrame(records, columns=['stock_code', 'corp_code', 'corp_name'])
 
         self.data_controller.create_table_set_key(df,"market","CodeTable","stock_code",True)
+@singleton
+class FinstateCralwer(DartCrawler):
+    def __init__(self):
+        super().__init__()
+        self.url = 	"https://opendart.fss.or.kr/api/fnlttSinglAcntAll.json"
+        self.params = {
+            "crtfc_key": self.api_key,
+            "corp_code": "",
+            "bsns_year": "",
+            "reprt_code": "",
+            "fs_div" : ""
+        }
+        self.code_df = self.data_controller.read_table("market","CodeTable")
+        self.quarter_list = [0,'11013','11012','11014', '11011']
 
+    def crawl_finstate(self,ticker:str,year:str,quarter:int,fs_div:str = "CFS")->pd.DataFrame:
+        corp_code = self.code_df.loc[self.code_df['stock_code'] == ticker,'corp_code'].iloc[0]
+        self.params["corp_code"] = corp_code
+        self.params["bsns_year"] = year
+        self.params["reprt_code"] = self.quarter_list[quarter]
+        if fs_div != "CFS":
+            fs_div = "OFS"
+        self.params["fs_div"] = fs_div
+
+        try:
+            res = requests.get(self.url,params=self.params)
+            res = res.json()
+            return pd.DataFrame(res["list"])
+        except Exception as e:
+            Debuger.printc(f"크롤 실패 : {e}")
+            return pd.DataFrame()
+    
+        
 
 class CompanyCrawler(DartCrawler):
     def __init__(self):
@@ -175,9 +207,14 @@ class CompanyCrawler(DartCrawler):
         
 
 def _test():
-    cc = CompanyCrawler()
-    cc.crawl_save_company("KOSPI")
+    # cc = CompanyCrawler()
+    # cc.crawl_save_company("KOSPI")
 
+    fc = FinstateCralwer()
+    res = fc.crawl_finstate("005930","2025",2)
+    res = pd.DataFrame(res)
+    DataController().save_df_excel(res,"samsung2025Q2")
+    
 _test()
 
 

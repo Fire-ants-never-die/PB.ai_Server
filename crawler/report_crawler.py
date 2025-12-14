@@ -1,7 +1,10 @@
 import pandas as pd
 import OpenDartReader
 from tqdm import tqdm
-from crawler.krx_crawler import KrxCrawler
+
+from krx_crawler import KrxCrawler
+from dart_crawler import FinstateCralwer
+
 import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from program_tool import *
@@ -33,6 +36,9 @@ class ReportCrawler():
 
         #KRX Cralwer class
         self.krx = KrxCrawler()
+
+        #manual Dart finstate crawler class
+        self.dfc = FinstateCralwer()
 
         #날짜/연도 관리
         self.datetime = DateTimeManager()
@@ -68,6 +74,7 @@ class ReportCrawler():
         try:
             self.dart_api_call_volume += 1
             fdata = self.dart.finstate_all(ticker,year)
+            fdata = self.dfc.crawl_finstate(ticker,str(year),quarter)
         except:
             Debuger.printc(f"dart 크롤링 실패: {tickermeta}")
             return False
@@ -220,8 +227,8 @@ class ReportCrawler():
                 bdataframe = pd.DataFrame([bdata],columns= self.balance_name); bdataframe["year"] = year + "Q" + f"{quarter}" 
                 idataframe = pd.DataFrame([idata],columns= self.income_name); idataframe["year"] = year + "Q" + f"{quarter}"
                 #db 저장 코드
-                self.data_controller.create_table_set_key(bdataframe,"extracted",f"{tickername}B","year")
-                self.data_controller.create_table_set_key(idataframe,"extracted",f"{tickername}I","year")
+                self.data_controller.create_table_set_key(bdataframe,"extracted",f"{tickername}B","year",replace=True)
+                self.data_controller.create_table_set_key(idataframe,"extracted",f"{tickername}I","year",replace=True)
 
                 parsed_list.append(tickermeta)
                 sucess_ticker.append(tickermeta[4:10])
@@ -336,31 +343,36 @@ class ReportCrawler():
     def _crawl_company(self,ticker) -> dict:
         #크롤성공여부
         is_company_sucess = True
-        is_worker_sucess = True
+        # is_worker_sucess = True
         try:
             c_dict = self.dart.company(ticker)
         except:
             Debuger.printc("company data 크롤 실패")
             is_company_sucess = False
-        try:
-            df = self.dart.report(ticker,'직원',str(int(self.datetime.formatted_year)-1))
-        except:
-            Debuger.printc("종업원수 데이터 크로링 실패")
-            is_worker_sucess = False
+        # try:
+            # df = self.dart.report(ticker,'직원',str(int(self.datetime.formatted_year)-1))
+        # except:
+            # Debuger.printc("종업원수 데이터 크로링 실패")
+            # is_worker_sucess = False
 
 
         
         company_dict = {}
-
+        """ 
         #직원 수 파싱
         # filtered = df[df["fo_bbm"] != "합계" or df["fo_bbm"] != "성별합계" or df["fo_bbm"] != "성별 합계"]
         # member_num = filtered["rgllbr_co"].sum()
         member_num = 0
         if is_worker_sucess:
-            ms_list = df.loc[~df["fo_bbm"].isin(["합계","성별합계","성별 합계"]),"rgllbr_co"].tolist()
-            for ms in ms_list:
-                member_num += int(ms.replace(",",""))
-
+            try:
+                ms_list = df.loc[~df["fo_bbm"].isin(["합계","성별합계","성별 합계"]),"rgllbr_co"].tolist()
+                for ms in ms_list:
+                    if ms == "-":
+                        continue
+                    member_num += int(ms.replace(",",""))
+            except:
+                member_num = "NULL"
+        """
 
         #개황정보 파싱
         company_key_dict = {
@@ -385,13 +397,13 @@ class ReportCrawler():
                     value = c_dict[k]
                 except:
                     value = "NULL"
-                    Debuger.printc(f"{ticker} 회사의 {v}는 없음")
+                    # Debuger.printc(f"{ticker} 회사의 {v}는 없음")
             else:
                 value = "NULL"
             if key_name == "상장구분":
                 value = market_name_dict[value]
             company_dict[key_name] = value
-        company_dict["종업원수"] = member_num
+        company_dict["종업원수"] = "NULL"
 
         #시가총액/ 발행주식수
         cap = self.krx.get_market_cap(ticker)
@@ -405,33 +417,45 @@ class ReportCrawler():
         ticker_list = self.krx.get_market_list(market=market_name)
         for ticker in progress(ticker_list,"개황정보/기타정보크롤링"):
             c_dict = self._crawl_company(ticker)
-            
-            self.data_controller.create_table_set_key_from_dict(c_dict,"market","company","티커",True)
+            self.data_controller.create_table_set_key_from_dict(c_dict,"market","company","티커",False)
 
+
+    def crawl_parse_save(self,year:str,quarter:int,market_name:str = "KOSPI"):
+        ticker_list = self.krx.get_market_list(market=market_name)
+        for ticker in progress(ticker_list,f"Q{quarter} 재무제표 크롤링/파싱/DB저장중"):
+            # self.__crawl_finstate(tickermeta)
+            try:
+                df = self.dfc.crawl_finstate(ticker,year,quarter)
+                datalist = self.parse_items(df)
+                #bdata == balance (재무상태표) / idata == income (손익계산서)
+                bdata = datalist[0]; idata = datalist[1]
+                bdataframe = pd.DataFrame([bdata],columns= self.balance_name); bdataframe["year"] = year + "Q" + f"{quarter}" 
+                idataframe = pd.DataFrame([idata],columns= self.income_name); idataframe["year"] = year + "Q" + f"{quarter}"
+                #db 저장 코드
+                self.data_controller.create_table_set_key(bdataframe,"extracted",f"{ticker}B","year",replace=False)
+                self.data_controller.create_table_set_key(idataframe,"extracted",f"{ticker}I","year",replace=False)
+
+            except Exception as e:
+                Debuger.printc(f"fail : {e}")
+                continue
 
     #디버깅용 시험 메서드
     def test(self):
-        #self.data_controller.remove_data_for_debug()
-
-        #ceo_nm, est_dt(설립일자), 
-        #self.crawl_market_5_year_report("KOSPI")
-
-        #-------------------
-        # test_ticker_list = ["005930", "000660", "373220", "207940"]
-        # crawled_set = self.data_controller.get_crawled_set()
-
-        # sucess_ticker_list = self.parse_5year_data([],4)
-        #self.calculate_MA(2025)
-        #df = self.dart.finstate_all("삼성전자",2023)
-        # df2 = self.dart.finstate('삼성전자', 2021, reprt_code='11013')
-        # df3 = self.dart.finstate('005930, 000660, 005380', 2021)
-        #self.data_controller.to_excel_test(df,"samsung2023")
+        
+        self.crawl_parse_save("2025",2)
 
         # self.crawl_company_from_market("KOSPI")
-        code = self.dart.find_corp_code('097955')
-        print(code)
-        d = self.dart.company(code)
-        print(d)
+        # df = self.dfc.crawl_finstate("005930","2025",2)
+        # res = self.parse_items(df)
+
+        # for i in res[0]:
+        #     print(i ,end=" ")
+        # print("========")
+        # for i in res[1]:
+        #     print(i,end = "")
+
+        # df = self.dart.finstate("005930",2025,reprt_code = "11012")
+        # self.data_controller.save_df_excel(df,"samsung2025test")
 
             
         # self.crawl_market_report("KOSPI",4)
@@ -442,6 +466,7 @@ class ReportCrawler():
 #인터넷을 사용해서 긁어올 기업정보가 있을때 사용하는 클래스입니다. deprecated
 def debug():
     reportCrawler =ReportCrawler()
+
     reportCrawler.test()
     #krx= KRXCrawler()
     #krx.crawl_stock_list()
