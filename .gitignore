@@ -5,3 +5,5 @@ data/
 docs_cache/
 ai/key.json
 ai/test.py
+/testdata
+.env
