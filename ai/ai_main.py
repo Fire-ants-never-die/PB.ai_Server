@@ -66,8 +66,24 @@ async def ai_main():
         "눈이 건조하면 어떻게 해야 해?",
         "사과먹을 때 조심해야 할 점 말해줄래?"
     ]
-
-
+    tab_class.data_for_ai={
+        "고양소방서":{
+            "화재예방과":["조사팀","민원팀","생안팀","대책팀"],
+            "행정과" : ["장비팀"],
+            "재난대응과":[]
+        },
+        "고양소방서일정": {
+            "11월" : ["공사시작","안전강사대회준비"],
+            "12월" : ["부서이동","교보재 불용처리","안전체험관공사"]
+        },
+        "카드" :["신용카드","체크카드","교통카드","보안카드"]
+    }
+    q_list = [
+        "고양소방서에는 팀이 몇 개가 있어?",
+        "고양소방서 12월 일정좀 알려줘",
+        "안전강사대회는 언제열릴까?",
+        "카드 종류 4가지좀 알려줄래?"
+    ]
 
     ans_list = []
     # ans_list.append(await ai_chat.ask("jinu","나 지금까지 몇 번 질문 했어??",tab_class,"samsung","주식가치평가",0))
@@ -76,13 +92,23 @@ async def ai_main():
     #     level = len(q_list) - i
     #     ans_list.append(await ai.ask("apple",q,tab_class,"samsung","주식가치평가",level))
     
-    for i in range(6):
-        q = input("질문을 입력하시오>>")
+    for q in q_list:
         await ai.ask("apple",q,tab_class,"samsung","주식가치평가",1)
     
+    for num in range(1,1):
+        q = f"{num} + 10 은 뭐야?"
+        await ai.ask("apple",q,tab_class,"samsung","주식가치평가",1)
+        #몇초 대기
+        cnt = 0
+        for _ in range(20000000):
+            cnt += 1
 
     await asyncio.gather(*ai.queue_controller.workers,return_exceptions=True)
     await ai.queue_controller.queue.join()
 
 if __name__ == "__main__":
     asyncio.run(ai_main())
+
+    #AIChattingQueueController 의 worker함수 맨 밑에서 response를 백엔드 혹은 클라이언트로 보내기만 하면 됨
+    #최근 질답 불러오기 갯수 설정은 prompt.py의 Chatsesion 클래스의 self.qna_call_cnt 를 참고 (기본 3개)
+    #Embedding.py의 Embdding 클래스의 self.k 변수로 RAG 구성에 필요한 데이터 갯수 조정 (기본 10개)
