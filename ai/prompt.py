@@ -3,17 +3,23 @@ from program_tool import *
 import json ,os,sys, datetime
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from controller.data_controller import UserDataController
+from controller.data_controller import DataController
 
 @singleton
 class GPT:
     def __init__(self):
         dir = os.path.dirname(__file__)
+
+        #api_key .env
+        data_controller = DataController()
+        __api_key = data_controller.get_env("GPT_API_KEY")
+
         meta_path = os.path.join(dir,"meta.json")
         with open(meta_path,'r',encoding="utf-8") as f:
             self.meta = json.load(f)
 
         self.system_content = self.meta["system-content"]
-        __api_key= self.meta["api_key"]
+        
 
         try:
             self.client = AsyncOpenAI(api_key=__api_key)
@@ -37,6 +43,9 @@ class ChatSession:
         self.gpt = GPT()
         self.client = self.gpt.client
         self.user_id = user_id
+
+        self.qna_call_cnt = 3
+
         if self.client == None:
             Debuger.printc("openAI 가 연결이 안되어 있습니다.")
             return
@@ -50,16 +59,16 @@ class ChatSession:
             return
 
         #최근 질답 3개만 불러오기
-        cnt = 3
+        qna_cnt = self.qna_call_cnt
         for chat in chat_list:
             #chat : (user_id, question, answer, datetime(str))
             #최신순으로 불러와집니다.
-            cnt -= 1
+            qna_cnt -= 1
             
             self.msg_list.append({"role":'user', "content" :chat[1]})
             self.msg_list.append({"role":'assistant', "content" :chat[2]})
 
-            if cnt == 0:
+            if qna_cnt == 0:
                 break
 
     #질답 모두 string
@@ -79,7 +88,7 @@ class ChatSession:
         self.msg_list.append({'role':'user',"content":answer})
 
         self.log_data.set_qna(self.user_id,self.question,answer,self.company_tab_name,datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
+        
         return answer # type: ignore
 
        
