@@ -4,7 +4,7 @@ import pandas as pd
 import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from program_tool import *
-from controller.data_controller import DataController
+from data.data_controller import DataController
 
 @singleton
 class KrxCrawler:

@@ -3,6 +3,9 @@ import uuid
 from fastapi import FastAPI
 from pydantic import BaseModel
 from program_tool import *
+from ai.ai_chatting_queue_controller import *
+from data.data_controller import DataController
+from contextlib import asynccontextmanager
 
 class ClientRequest(BaseModel):
     user_id:str
@@ -10,20 +13,42 @@ class ClientRequest(BaseModel):
     tab_name:str
     company_name:str
 
-@singleton
-class Server:
-    def __init__(self) -> None:
-        self.app = FastAPI()
-        self.app.add_api_route("/data",self.get_data,methods=["POST"])
-    
-    async def get_data(self, req:ClientRequest):
-        return {"msg":"hello world!"}
+
+
+@app.post('/ask')
+async def client_ask(self,req:ClientRequest):
+    task_id = str(uuid.uuid4())
+    queue_data = ChattingQueueData(
+        user_id=req.user_id,
+        question= req.question,
+        tab_name= req.tab_name,
+        company_name=req.company_name,
+        user_level= 1
+        )
+
+    await qcon.put_task(queue_data)
+
+    return {
+        "task_id" : task_id,
+        "status" : "queued ok"
+    }
 
 
 
+#==========[execute server]========
 
-def main():
-    server = Server()
+qcon = AIChattingQueueController(2,1000)
+dcon = DataController()
 
-if __name__ == "__main__":
-    main()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("server start")
+    await qcon.run()
+    yield
+
+    print("server shut down")
+    await qcon.stop()
+    await asyncio.gather(*qcon.workers,return_exceptions=True)
+
+
+app = FastAPI(lifespan=lifespan)

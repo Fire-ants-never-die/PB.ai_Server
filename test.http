@@ -1,0 +1,9 @@
+POST http://localhost:8000/data
+Content-Type: application/json 
+
+{
+    "user_id":"jinu123",
+    "question":"i am hungry",
+    "tab_name":"report_overview",
+    "company_name":"samsung"
+}

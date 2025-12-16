@@ -2,8 +2,8 @@ from openai import AsyncOpenAI
 from program_tool import *
 import json ,os,sys, datetime
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-from controller.data_controller import UserDataController
-from controller.data_controller import DataController
+from data.data_controller import UserDataController
+from data.data_controller import DataController
 
 @singleton
 class GPT:

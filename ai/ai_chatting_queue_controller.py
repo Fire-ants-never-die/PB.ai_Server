@@ -1,15 +1,12 @@
 from program_tool import *
 import sys
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-
-from ai.embedding import Embedding
-from ai.prompt import ChatSession
-from main import Tab
+from embedding import Embedding
+from prompt import ChatSession
 import asyncio
 
 #상위폴더 모듈 import
 # sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-from controller.data_controller import UserDataController
+from data.data_controller import UserDataController
 
 # ======AI 채팅과 큐에 삽입될 정보를 관리하는 모듈입니다.=======
 
@@ -72,8 +69,8 @@ class ChattingQueueData:
     _counter = 0
     #유저 식별 id, 탭(주식가치평가, overview등의 정보를 담은 객체. main.py에 있는 Report로 시작하는 모든 class가 여기에 해당)
     # user_level : int형 변수로서, 높을 수록 우선순위가 높게 답변이 생성됨. (유료 회원 기능)
-    def __init__(self,user_id,question,tab_class:Tab,company_name, tab_name,user_level:int):
-        self.tab_info = tab_class.data_for_ai #dictionary형의 재무정보/등등입니다.
+    def __init__(self,user_id,question,company_name, tab_name,user_level:int):
+        self.tab_info = self.get_tab_info(tab_name) #dictionary형의 재무정보/등등입니다.
         
         #데이터 구성
         self.question = question
@@ -116,6 +113,13 @@ class ChattingQueueData:
         self.context = context_data
 
         return await session.ask()
+    
+    def get_tab_info(self,tab_name) -> dict:
+        info = {}
+
+        #db에서 긁어와서 처리하고 보내주기. (RAG)
+
+        return info
 
 
 
