@@ -96,6 +96,9 @@ class ChattingQueueData:
         if ChattingQueueData._counter > 999:
             ChattingQueueData._counter = 0
         self._instance_id = ChattingQueueData._counter
+
+        #context data 확인용
+        self.context = ""
     
     #큐에 인스턴스가 들어가고 우선순위가 같을때 우선권을 비교결정 하기 위한 메서드입니다.
     def __lt__(self,other):
@@ -109,13 +112,8 @@ class ChattingQueueData:
         self.question = "다음의 검색된 데이터를 참고하여 질문에 답변해주세요." + context_data + "질문 :" + self.question
         session = ChatSession(self.question,self.user_id,self.company_name,self.tab_name,self.model_name)
 
-        #RAG가 제대로 작동하는지 확인하는 코드. 참고되는 컨텍스트 데이터가 잘 뽑히는지 확인합니다
-        #===
-        # res = "\n========검색된 데이터===-=====\n"
-        # res += context_data
-        # res += await session.ask()
-        # return res
-        #==
+        #context data 확인용
+        self.context = context_data
 
         return await session.ask()
 
@@ -155,16 +153,34 @@ class AIChattingQueueController:
             is_sucess = False
             try:
                 priority, item = await self.queue.get()
+                item:ChattingQueueData
                 #for debug
                 print(f"[Worker {worker_id}] Got item, priority={priority}, memory_usage = {self.queue.memory_usage}bytes")
                 #비동기 실행
                 # await self.loop.run_in_executor(None,item.get_answer)
                 ans = await item.get_answer()
                 is_sucess = True
-                print(ans)
+
+                response = {
+                    "status" : "200",
+                    "user_id" : item.user_id,
+                    "company_name" : item.company_name,
+                    "company_tab_name" : item.company_tab_name,
+                    "question" : item.question,
+                    "answer" : ans
+                }
+
+                Debuger.printc(f"queue controller 인스턴스의 worker 함수 속에서 실행되는 답변입니다\n 질문 : {item.question}\n 검색된 데이터:{item.context}\n답변 :{ans}")
+
             except Exception as e:
                 Debuger.printc(f"worker비동기 에러 : {e}")
+                response = {
+                    "status" : f"{e}"
+                }
             finally:
+
+                #여기에서 response를 백엔드로 보내면 됩니다
+
                 if is_sucess:
                     self.queue.task_done()
     
@@ -180,30 +196,3 @@ class AIChattingQueueController:
         for worker in self.workers:
             worker.cancel()
         await asyncio.gather(*self.workers, return_exceptions=True)
-    """
-    #대기열 작업자 (worker)가 실행할 함수
-    async def execute(self,worker_idx):
-        while True:
-            priority, task_id,ChattingQueueData,future = await self.queue.get()
-            try:
-                answer = await ChattingQueueData.get_answer()
-                future.set_result(answer)
-                #현재 future에 문제가 있음
-            except Exception as e:
-                Debuger.printc("비동기 에러")
-            finally:
-                self.queue.task_done()
-                
-    #대기열에 작업 넣기
-    async def put_task(self,chatting:ChattingQueueData):
-        future = asyncio.get_running_loop().create_future()
-        task_id = id(future)
-        await self.queue.put((-chatting.user_level,task_id,chatting,future))
-        return future
-   
-    #현재 대기열 상황 (큐에 몇개 있는지,큐 전체 메모리)
-    def get_queue_info(self) -> tuple:
-        res = ()
-        return res
-    
-    """
