@@ -79,7 +79,8 @@ class Tab:
         self.is_called = [] #아래에 있는 함수들이 호출되면서 data_for_ai가 채워졌는지 확인하는 bool리스트입니다.
    
 
-#리포트 기업 오버뷰 (krx 크롤링이 포함됩니다.)
+#리포트 기업 오버뷰 (krx 크롤링이 포함됩니다.) 
+#현재, 매출산업구성, 재무건전성, 산업설명은 메서드 안채워져 있습니다
 class ReportOverview(Tab):
     # company_name은 ticker, 이름 둘 다 가능합니다.
     def __init__(self,name,ticker,market_data):
@@ -92,7 +93,7 @@ class ReportOverview(Tab):
 
         # ai 넘겨줄 정보 저장
         self.is_called = [False,False,False,False,False] #아래에 있는 함수들이 호출되면서 data_for_ai가 채워졌는지 확인하는 bool리스트입니다.
-    #1 기업 프로필 ***
+    #1 기업 프로필 
     #{티커, 고유번호, 기업이름, 기업영문, 주식이름,CEO, 상장구분, 주소, 홈페이지, 업종코드, 설립일, 결산월, 종업원수  시가총액 발행주식수} 딕셔너리로 반환
     # 상장구분은 "KOSPI","KOSDAQ" "기타","NULL" 등으로 표시됩니다.
     # 현재 위 리스트의 x 항목을 크롤 할 방법을 찾아야 함.
@@ -170,7 +171,7 @@ class ReportOverview(Tab):
             self.data_for_ai["재무건전성"] = int
         return res
 
-    #5 산업 설명
+    #5 산업 설명 ***
     #산업명/평가기준일/산업평가 종합등급 /여신정책
     def get_industrial_explanation(self) -> dict:
         info_dict = {}
@@ -196,66 +197,11 @@ class ReportFinancialAnalyze(Tab):
         self.df_balance = self.data_controller.read_table("extracted",f"{self.ticker}B")
         self.df_income = self.data_controller.read_table("extracted",f"{self.ticker}I")
 
+        #계산항목가져오기 (비율데이터)
+        self.dfc = self.data_controller.read_table("calculation",ticker)
+
         # ai 넘겨줄 정보 저장
         self.is_called = [False,False,False,False,False]
-
-
-    #특정 연도 비율 게산 (백분율)
-    def _calculate_ratio(self,year,numerator_list,denominator_list):
-        #분자 계산
-            numerator = 0
-            for ndata in numerator_list:
-                col = ndata[0]; sign = 1 if ndata[1] == "+" else -1
-                if col in self.df_balance.columns:
-                    dict = self.df_balance[col].to_dict()
-                else:
-                    dict = self.df_income[col].to_dict()   
-                key = ""
-                for quarter in range(4,0,-1):
-                    _key = f"{year}Q" + str(quarter)
-                    if _key in dict:
-                        key = _key 
-                if key == "":
-                    return False
-                if dict[key] == "None" or dict[key] == None or dict[key] == "":
-                    return False
-                numerator += (sign * dict[key])
-            #분모 계산
-            denominator = 0
-            for ddata in denominator_list:
-                col = ddata[0]; sign = 1 if ddata[1] == "+" else -1
-                if col in self.df_balance.columns:
-                    dict = self.df_balance[col].to_dict()
-                else:
-                    dict = self.df_income[col].to_dict()   
-                key = ""
-                for quarter in range(4,0,-1):
-                    _key = f"{year}Q" + str(quarter)
-                    if _key in dict:
-                        key = _key 
-                if key == "":
-                    return False
-                if dict[key] == "None" or dict[key] == None or dict[key] == "":
-                    return False
-                denominator += (sign * dict[key])
-            
-            ratio = numerator / denominator * 100
-            return ratio
-
-    #시계열데이터 분석 private 메서드. 데이터 부족으로 계산 실패하면 False 반환
-    #numerator_list : (분자로 올 list[["칼럼명","부호"],["칼럼명","부호"]...], denominator: 분모..
-    #ex  ["유동자산","+"]
-    def _calculate_ma(self,numerator_list,denominator_list):
-        year = int(self.current_year)
-        if int(self.month) <= 3:
-            year -= 1
-        res = 0
-        for dy in range(1,4):
-            target_year = year - dy
-            ratio = self._calculate_ratio(target_year,numerator_list,denominator_list)
-            res += (ratio * (4 - dy))
-        res /= 6
-        return res
 
     #1 재무 상황. 리포트오버뷰 페이지와 동일한 데이터지만, 실제로 그래프를 그려야 하므로
     #  한글로 포매팅된 str 형식이 아닌, int형 데이터를 반환해야 합니다. 그래프 아래에 보여질
@@ -306,176 +252,87 @@ class ReportFinancialAnalyze(Tab):
         pass
 
     #3 안정성 분석
-    #3.1 유동성 분석   유동비율 : {"2023": data, "시계열평균": data, "업종중위수" : data, "시계열점수" : data, "업종점수" : data}
+    #3.1 유동성 분석   유동비율 : {"데이터분자": 분자구하는 식, "데이터분자값": 분자값, "데이터분모" : 분모구하는 식, "데이터분모값" : 분모값, "데이터" : data(실제비율), "시계열평균분자" : 시계열평균 분자값, "시계열평균분모" : 1}
     #                당좌비율...
     #                현금비율, 순운전자본대총자본, 비유동비율, 비유동장기적합율 등등이 key로 존재합니다.
     def get_analyze_stability_liquidity(self):
+        item_name = ["유동비율","당좌비율","현금비율","순운전자본대총자본","비유동비율","비유동장기적합률"]
         info_dict = {}
-        rows = ["유동비율","당좌비율","현금비율","순운전자본대총자본","비유동비율","비유동장기적합률"]
+        for name in item_name:
+            dt =self.dfc[self.dfc["항목"] == name].iloc[0].to_dict()
 
-        fomula ={
-            #                        분자 (numerator)     /      분모(denominator)
-            "유동비율" :        (  [("유동자산","+")],          [("유동부채","+")]   ),
-            "당좌비율":         (   [("당좌자산","+")],         [("유동부채","+")]    ),
-            "현금비율":         (   [("현금및현금성자산","+")],         [("유동부채","+")]    ),
-            "순운전자본대총자본":(   [("유동자산","+"),("유동부채","-")],         [("자산총계","+")]    ),
-            "비유동비율":       (   [("비유동자산","+")],         [("자본총계","+")]    ),
-            "비유동장기적합률":  (   [("비유동자산","+")],         [("자본총계","+"),("비유동부채","+")]    ),
-        }
-
-        """
-        위에 공식 기능요구사항 명세서 리포트탭 F열 보면서 채워놓고, 아래의 반복문도 채워넣어야함
-        """
-
-        year = int(self.current_year)
-        if int(self.month) <= 3:
-            year -= 1
+            info_dict[name] = dt
         
-        
-        for row in rows:
-            to_dict = {}
-            #data
-            try:
-                ratio = self._calculate_ratio(year,fomula[row][0],fomula[row][1])
-                ratio = format(ratio,".2f")
-            except:
-                ratio = "NULL"
-            #시계열 평균
-            try:
-                mean = self._calculate_ma(fomula[row][0],fomula[row][1])
-            except:
-                mean = "NULL"
-
-            #업종중위수
-
-            #시계열점수
-
-            #업종점수
-            
-            
-            to_dict[str(year)] = ratio
-            to_dict["시계열평균"] = mean
-
-            info_dict[row] = to_dict
+        if self.is_called[0] == False:
+            self.is_called[0] = True
+            self.data_for_ai["유동성분석"] = info_dict
 
         return info_dict
-            
+
+        
     #3.2 레버리지 분석
     # 열 값은 3.1과 같으며, {부채비율, 자기자본비율, 유동부채비율, 비유동부채비율,차입금의존도, 차입금대매출액} 이 있습니다.
-    def get_analyze_stability_leverage(self):
+    def get_analyze_stability_leverage(self):  
+        item_name = ["부채비율", "자기자본비율", "유동부채비율", "비유동부채비율","차입금의존도", "차입금대매출액"]
         info_dict = {}
-        rows = ["부채비율","자기자본비율","유동부채비율","비유동부채비율","차입급의존도","차입금대매출액"]
-
-        fomula ={
-            #                        분자 (numerator)     /      분모(denominator)
-            "부채비율" :        (  [("부채총계","+")],          [("자본총계","+")]   ),
-            "자기자본비율":         (   [("자본총계","+")],         [("자산총계","+")]    ),
-            "유동부채비율":         (   [("유동부채","+")],         [("자본총계","+")]    ),
-            "비유동부채비율":(   [("비유동부채","+")],         [("자본총계","+")]    ),
-            "차입금의존도":       (   [("차입금","+")],         [("자산총계","+")]    ),
-            "차입금대매출액":  (   [("차입금","+")],         [("매출액","+")]    ),
-        }
-
-        year = int(self.current_year)
-        if int(self.month) <= 3:
-            year -= 1
-        
-        
-        for row in rows:
-            to_dict = {}
-            #data
-            try:
-                ratio = self._calculate_ratio(year,fomula[row][0],fomula[row][1])
-                ratio = format(ratio,".2f")
-            except:
-                ratio = "NULL"
-            #시계열 평균
-            try:
-                mean = self._calculate_ma(fomula[row][0],fomula[row][1])
-            except:
-                mean = "NULL"
-
-            #업종중위수
-
-            #시계열점수
-
-            #업종점수
-            
-            
-            to_dict[str(year)] = ratio
-            to_dict["시계열평균"] = mean
-
-            info_dict[row] = to_dict
-
+        for name in item_name:
+            dt =self.dfc[self.dfc["항목"] == name].iloc[0].to_dict()
+            info_dict[name] = dt
+        if self.is_called[0] == False:
+            self.is_called[0] = True
+            self.data_for_ai["레버리지분석"] = info_dict
         return info_dict
-            
-
     #4 수익성 분석
     #4.1 투자수익성 분석
     #열 값은 3.1과 같으며, {총자산세전수익률, 총자산순이익률,기업세전순이익률,기업순이익률,자기자본세전순이익률,자본금세전순이익률,자본금순이익률,자기자본순이익률}
     def get_analyze_profitability_investment(self):
+        item_name =["총자산세전수익률", "총자산순이익률","기업세전순이익률","기업순이익률","자기자본세전순이익률","자본금세전순이익률","자본금순이익률","자기자본순이익률"]
         info_dict = {}
-        rows = ["총자산세전수익률", "총자산순이익률","기업세전순이익률","기업순이익률","자기자본세전순이익률","자본금세전순이익률","자본금순이익률","자기자본순이익률"]
-
-        fomula ={
-            #                        분자 (numerator)     /      분모(denominator)
-            "총자산세전수익률" :        (  [("법인세비용차감전순이익","+")],          [("자산총계","+")]   ),
-            "총자산순이익률":         (   [("자본총계","+")],         [("자산총계","+")]    ),
-            "기업세전순이익률":         (   [("유동부채","+")],         [("자산총계","+")]    ),
-            "기업순이익률":(   [("비유동부채","+")],         [("자산총계","+")]    ),
-            "자기자본세전순이익률":       (   [("차입금","+")],         [("자본총계","+")]    ),
-            "자본금세전순이익률":  (   [("차입금","+")],         [("매출액","+")]    ),
-            "자본금순이익률":  (   [("차입금","+")],         [("매출액","+")]    ),
-            "자기자본순이익률":  (   [("차입금","+")],         [("매출액","+")]    ),
-        }
-
-        year = int(self.current_year)
-        if int(self.month) <= 3:
-            year -= 1
-        
-        
-        for row in rows:
-            to_dict = {}
-            #data
-            try:
-                ratio = self._calculate_ratio(year,fomula[row][0],fomula[row][1])
-                ratio = format(ratio,".2f")
-            except:
-                ratio = "NULL"
-            #시계열 평균
-            try:
-                mean = self._calculate_ma(fomula[row][0],fomula[row][1])
-            except:
-                mean = "NULL"
-
-            #업종중위수
-
-            #시계열점수
-
-            #업종점수
-            
-            
-            to_dict[str(year)] = ratio
-            to_dict["시계열평균"] = mean
-
-            info_dict[row] = to_dict
-
+        for name in item_name:
+            dt =self.dfc[self.dfc["항목"] == name].iloc[0].to_dict()
+            info_dict[name] = dt
+        if self.is_called[0] == False:
+            self.is_called[0] = True
+            self.data_for_ai["투자수익성분석"] = info_dict
         return info_dict
 
     #4.2 판매 마진 분석
     #열 값은 3.1과 같으며, {매출액세전순이익률,매출액순이익률,매출액영업이익률,EBIT대매출액,EBITDA대매출액}
     def get_analyze_profitability_margin(self):
-        pass
+        item_name =["매출액세전순이익률","매출액순이익률","매출액영업이익률","EBIT대매출액","EBITDA대매출액"]
+        info_dict = {}
+        for name in item_name:
+            dt =self.dfc[self.dfc["항목"] == name].iloc[0].to_dict()
+            info_dict[name] = dt
+        if self.is_called[0] == False:
+            self.is_called[0] = True
+            self.data_for_ai["판매마진분석"] = info_dict
+        return info_dict
     
     #5 성장성 분석
     #열 값은 3.1과 같으며, {총자산증가율,유형자산증가율,유동자산증가율,자기자본증가율,매출액 증가율}
     def get_analyze_growth(self):
-        pass
-
+        item_name =["총자산증가율","유형자산증가율","유동자산증가율","자기자본증가율","매출액증가율"]
+        info_dict = {}
+        for name in item_name:
+            dt =self.dfc[self.dfc["항목"] == name].iloc[0].to_dict()
+            info_dict[name] = dt
+        if self.is_called[0] == False:
+            self.is_called[0] = True
+            self.data_for_ai["성장성분석"] = info_dict
+        return info_dict
     #6 활동성 분석
     #열 값은 3.1과 같으며, {총자산회전율,자기자본회전율,자본금회전율,경영자산회전,비유동자산회전율,유형자산회전율,재고자산회전율,제품회전율,매출채권회전율}
     def get_analyze_activity(self):
-        pass
+        item_name =["총자산회전율","자기자본회전율","자본금회전율","경영자산회전율","비유동자산회전율","유형자산회전율","재고자산회전율","제품회전율","매출채권회전율"]
+        info_dict = {}
+        for name in item_name:
+            dt =self.dfc[self.dfc["항목"] == name].iloc[0].to_dict()
+            info_dict[name] = dt
+        if self.is_called[0] == False:
+            self.is_called[0] = True
+            self.data_for_ai["활동성분석"] = info_dict
+        return info_dict
 
 
 #리포트_투자지표
@@ -484,6 +341,14 @@ class ReportInvestmentIndex(Tab):
         super().__init__()
         # ai 넘겨줄 정보 저장
         self.is_called = [False,False,False,False,False]
+
+    
+    def get_per_share(self):
+        info_dict = {}
+        
+        if self.is_called[0] == False:
+            self.is_called[0] = True
+            self.data_for_ai["주당지표"] = info_dict
 
 #리포트_주식가치평가
 class ReportStockValuation(Tab):
@@ -496,10 +361,7 @@ class ReportStockValuation(Tab):
 
 
 def main():
-
-    rc = ReportCrawler()
-    rc.test()
-
+    pass
 
 
 if __name__ == "__main__":
