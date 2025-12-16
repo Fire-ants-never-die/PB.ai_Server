@@ -339,9 +339,118 @@ class ReportCalculator:
             except Exception as e:
                 Debuger.printc(f"실패 : {e} {key}")
 
+
+
+
+    #업종중위수 계산하기
+
+    #먼저 market.db - company 항목의 업종코드로 묶는거 필요.
+
+    def get_company_same_industry(self,ticker):
+        df = self.data_controller.read_table("market","company")
+        industry_code = df.loc[df["티커"] == ticker,'업종코드'].iloc[0]
+        companys = df.loc[df["업종코드"] == industry_code].to_dict(orient= 'records') # type: ignore
+        return companys
+    
+
+    def calculate_industy_median(self):
+        df = self.data_controller.read_table("market","company")
+        dfs = {key:group for key,group in df.groupby('업종코드')}
+
+        # code_set = set(df['업종코드'])
+
+        for code, group_df in progress(dfs.items(),""):
+            #동일업종 티커 리스트
+            tickers = group_df["티커"].tolist()
+            size = len(tickers)
+            if size <= 1:
+                continue
+            data_list = {}
+            for ticker in tickers:
+                try:
+                    tdf = self.data_controller.read_table("calculation",ticker)
+                except:
+                    size -= 1
+                    continue
+                dt_list = tdf.to_dict(orient = 'records')
+                for dt in dt_list:
+                    key_name = dt["항목"]
+                    if dt["데이터분모값"] == "Null" or dt["데이터분자값"] == "Null":
+                        value = "Null"
+                    else:
+                        value = int(dt["데이터분자값"]) / int(dt["데이터분모값"])
+                    if key_name in data_list:
+                        data_list[key_name].append(value)
+                    else:
+                        data_list[key_name] = [value]
+
+            median_dt = {}
+
+            for key, lst in data_list.items():
+                m = "Null"
+                if size % 2 == 0:
+                    v1 = lst[size//2]
+                    v2 = lst[size//2 - 1]
+                    if v1 == "Null" or v2 == "Null":
+                        pass
+                    else:
+                        m = (int(v1) + int(v2)) / 2
+                else :
+                    m = lst[size//2]
+                median_dt[key] = m
+            
+            for ticker in tickers:
+                put_value_dict = {}
+                try:
+                    tdf = self.data_controller.read_table("calculation",ticker)
+                except:
+                    continue
+                dt_list = tdf.to_dict(orient='records')
+                for dt in dt_list:
+                    item_name = dt["항목"]
+                    if median_dt[item_name] == "Null":
+                        put_value_dict[item_name] = "Null"
+                    else:
+                        if dt["데이터분모값"] == '0' or median_dt[item_name] == 0 or dt["데이터분모값"] == "Null" or dt["데이터분자값"] == "Null":
+                            put_value_dict[item_name] = "Null"
+                        else:
+                            put_value_dict[item_name] = (int(dt["데이터분자값"]) / int(dt["데이터분모값"]) ) / median_dt[item_name] * 100
+                #db data append
+                # print(put_value_dict)
+
+                #ticker에 해당하는 calculation.db -  ticker 라는 테이블을 찾아, put value dict의 key값에 해당하는 행에서 업종중위수라는 새로운 열을 만들어  value를 넣어야함.
+                try:
+                    self.data_controller.create_columns("calculation",ticker,["업종중위수"])
+                except Exception as e:
+                    Debuger.printc(f"칼럼추가 실패: {e}")
+                    continue
+                try:
+                    print(ticker)
+                    self.data_controller.update_column_by_dict("calculation",ticker,put_value_dict,"항목","업종중위수")
+                except Exception as e:
+                    Debuger.printc(f"데이터추가실패 : {e}")
+                
+    def put_col(self):
+        df = self.data_controller.read_table("market","company")        
+        tickers = df['티커'].to_list()
+        for ticker in progress(tickers,""):
+            if ticker == "NULL":
+                continue
+            try:
+                self.data_controller.create_columns("calculation",ticker,['업종중위수'])
+            except:
+                pass
+
+    def _debug(self):
+        self.calculate_industy_median()
+
+    
+        
+
+
 def _test():
     cal = ReportCalculator()
-    cal.save_stability()
+    cal._debug()
 
 if __name__ == "__main__":
     _test()
