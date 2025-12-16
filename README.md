@@ -89,7 +89,7 @@ DB002 (5개년 재무상태표 파싱) : 구현 시작 안함. DB001에 api 호�
 5.tiktoken          pip install tiktoken               open api 사용을 위한 토큰 분리
 6.financedatareader pip install finance-datareader     주가정보크롤링1
 7.pykrx :           pip install pykrx                  주가정보크롤링2
-8.env :             pip install python-dotenv          api_key 환경변수로 관리
+8.env :             pip install python-dotenv          api_key 환경변수로 관리 (아나콘다는 기본설치됨을 확인)
 
 ### api key
 파일경로 아래에 data 폴더를 생성, data/meta.json 파일을 생성한다
