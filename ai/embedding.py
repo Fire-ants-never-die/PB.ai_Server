@@ -15,7 +15,8 @@ class Embedding:
         self.context_dict = context_dict
         # ====[답변 품질에 영향을 주는 변수] ===
         self.model= "text-embedding-3-small"
-        self.k = 3   #이전 질답 최대 self.k 개만큼 가져와서 임베딩
+        self.k = 10   #추출할 정보갯수. 너무 적으면 RAG에 쓰이는 데이터가 적어지고, 너무 많으면 답변속도 저하 혹은 쓸데 없는 정보가 ai 방해
+        
 
     #임베딩 & 로컬 메모리 저장 (사용자 질문 임베딩, 리포트 임베딩)
     #인자로 들어가는 정보들은, 불규칙적 일 가능성이 높습니다.
@@ -39,15 +40,6 @@ class Embedding:
             results = collection.query(query_embeddings=[q_emb],n_results=self.k, include=["documents","distances","metadatas"])
 
             context = "\n".join(results["documents"][0]) # type: ignore
-
-            #===debug===
-            # kk = ["documents","distances","metadatas"]
-            # print(f"질문:{self.question}")
-            # print("검색된 데이터:")
-            # for i in range(3):
-            #     print(f"데이터 {i}번 : {results[kk[i]][i]}")
-            #     print(f"distance {i}번 : {results[kk[i]][i]}")
-            #     print(f"metadata {i}번 : {results[kk[i]][i]}")
 
             return "\n검색된 데이터:\n" + context
         except:
