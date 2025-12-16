@@ -2,7 +2,7 @@ import zipfile
 import io,xml.etree.ElementTree as ET
 import pandas as pd
 import requests, sys, os
-from krx_crawler import KrxCrawler
+from crawler.krx_crawler import KrxCrawler
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from controller.data_controller import DataController
 from program_tool import *
@@ -11,7 +11,8 @@ from program_tool import *
 class DartCrawler:
     def __init__(self):
         self.data_controller = DataController()
-        self.api_key = self.data_controller.get_meta_data()["api_key"]
+        self.api_key = self.data_controller.get_env("DART_API_KEY")
+        # self.api_key = self.data_controller.get_meta_data()["api_key"]
 
 
 #종목코드과, 기업고유번호, 기업 이름을 크롤링해옵니다. 자주는 아니더라도 가끔씩 아래메서드를 호출하여 업데이트하는 것이 좋겠습니다.
