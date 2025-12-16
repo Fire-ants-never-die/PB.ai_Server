@@ -2,8 +2,8 @@ import pandas as pd
 import OpenDartReader
 from tqdm import tqdm
 
-from krx_crawler import KrxCrawler
-from dart_crawler import FinstateCralwer
+from crawler.krx_crawler import KrxCrawler
+from crawler.dart_crawler import FinstateCralwer
 
 import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
@@ -23,7 +23,7 @@ class ReportCrawler():
         meta_data = self.data_controller.get_meta_data()
 
         #api key 호출
-        self.api_key = meta_data["api_key"]
+        self.api_key = self.data_controller.get_env("DART_API_KEY")
 
         #크롤링한 재무제표/연결제무제표 +@ 에서 추출할 항목들
         self.balance_name = meta_data["balance_name"] #이름으로 추출
@@ -442,23 +442,7 @@ class ReportCrawler():
     #디버깅용 시험 메서드
     def test(self):
         
-        self.crawl_parse_save("2025",2)
-
-        # self.crawl_company_from_market("KOSPI")
-        # df = self.dfc.crawl_finstate("005930","2025",2)
-        # res = self.parse_items(df)
-
-        # for i in res[0]:
-        #     print(i ,end=" ")
-        # print("========")
-        # for i in res[1]:
-        #     print(i,end = "")
-
-        # df = self.dart.finstate("005930",2025,reprt_code = "11012")
-        # self.data_controller.save_df_excel(df,"samsung2025test")
-
-            
-        # self.crawl_market_report("KOSPI",4)
+        pass
         
         
 
@@ -468,12 +452,10 @@ def debug():
     reportCrawler =ReportCrawler()
 
     reportCrawler.test()
-    #krx= KRXCrawler()
-    #krx.crawl_stock_list()
+    
 
     test_list = ["005930","000660","373220","207940"]
 
-    #msg = reportCrawler.test()
 
 
 
