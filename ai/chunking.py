@@ -32,7 +32,7 @@ def chunk_dict_data(data:dict) -> list:
                 if type(value) == list:
                     adress += "["
                     for i in range(len(value)):
-                        adress += str(i)
+                        adress += f"{str(i+1)}.{value[i]} "
                         if i != len(value) - 1:
                             adress += ","
                         else:
@@ -88,7 +88,7 @@ class Chunking:
 
 def _test():
     data = {"jinu" : {"age" : 24, "height" : 175, "hobby": {"bad" : "game", "good" : "coding" }}, "today":"1203"}
-    print(chunk_dict_data(data))
+
 if __name__ == "__main__":
     _test()
 
