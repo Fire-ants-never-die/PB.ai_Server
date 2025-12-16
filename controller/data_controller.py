@@ -1,5 +1,6 @@
 import os , sys, json ,pickle, sqlite3
 import pandas as pd
+from dotenv import load_dotenv
 #상위폴더 모듈 import
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from program_tool import *
@@ -139,12 +140,18 @@ class DataController:
     def __init__(self) -> None:
         #DB path
         dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
-        path_name = ["extracted","raw","market"]
+        path_name = ["extracted","raw","market","calculation"]
         self.pathtype = {}
         for name in path_name:
             self.pathtype[name] = os.path.join(dir,f"data/{name}.db")
 
         self.meta_path = os.path.join(dir,"data/meta/")
+        
+        #.env파일 load
+        load_dotenv()
+    
+    def get_env(self,name:str):
+        return os.environ.get(name)
     
     def create_table(self,df:pd.DataFrame,dbtype:str,table_name:str,append:bool = True): #dbtype : "extracted", "raw", "market"
         con = sqlite3.connect(self.pathtype[dbtype])
@@ -207,12 +214,56 @@ class DataController:
         cursor.execute(sql_order,rt)
         con.commit()       
         con.close()
+    
+    def create_table_for_calculation(self,dt:dict,table_name):
+        con = sqlite3.connect(self.pathtype["calculation"])
+        cursor = con.cursor()
+        cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS {table_name} (
+            항목 TEXT PRIMARY KEY,
+            데이터분자 TEXT,
+            데이터분자값 TEXT,
+            데이터분모 TEXT,
+            데이터분모값 TEXT,
+            데이터 TEXT,
+            시계열평균분자 TEXT,
+            시계열평균분모 TEXT
+        )
+        """)
+        cursor.executemany(f"INSERT INTO {table_name} (key, value) VALUES (?, ?)",dt.items())
+        con.commit()
+        con.close()
+
+    def create_columns(self,dbtype:str,table_name:str,col_list:list):
+        con = sqlite3.connect(self.pathtype[dbtype])
+        cursor = con.cursor()
+
+        cursor.execute(f'PRAGMA table_info("{table_name}")')
+        cols = [row[1] for row in cursor.fetchall()]
+        for col in col_list:
+            if col not in cols:
+                cursor.execute(f"ALTER TABLE '{table_name}' ADD COLUMN {col} TEXT")
+        con.commit()
+        con.close()
 
     def read_table(self,dbtype:str,table_name:str)->pd.DataFrame:
         con = sqlite3.connect(self.pathtype[dbtype])
         res = pd.read_sql(f"SELECT * FROM '{table_name}'",con)
         con.close()
         return res
+    
+    #row_name에 헤당하는 열에서 data_dict의 key값을 찾아, 그 행의 col_name에 해당하는 열에 value를 집어넣습니다.
+    def update_column_by_dict(self,dbtype:str,table_name:str,data_dict:dict,row_name:str,col_name:str):
+        con = sqlite3.connect(self.pathtype[dbtype])
+        cursor = con.cursor()
+        params = [(value,key) for key,value in data_dict.items()]
+        cursor.executemany(f"""
+            UPDATE '{table_name}'
+            SET {col_name} = ?
+            WHERE {row_name} = ?
+            """, params)
+        con.commit()
+        con.close()
     
 
     def get_meta_data(self) ->dict:
