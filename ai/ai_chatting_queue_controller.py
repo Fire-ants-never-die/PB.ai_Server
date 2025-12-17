@@ -65,16 +65,25 @@ class MemoryTrackingPriorityQueue(asyncio.PriorityQueue):
             
         return size
 
+#type : 처리내용 타입
+#question : ai 답변 받아오기 , prev_qna_by_company prev_qna_session, delete_session
 class QueueItem:
-    def __init__(self,type:str,task_id:str,user_id:str,user_level:int,question=None,company_name=None,tab_name=None) -> None:
+    def __init__(
+            #필수
+            self,type:str,task_id:str,user_id:str,user_level:int,
+            #선택
+            #  - ai 질문 or 질답기록조회 or 기록삭제
+            question=None,company_name=None,tab_name=None,preserve_num:int=0) -> None:
         self.type = type
         self.task_id = task_id
         self.user_id = user_id
         self.user_level = user_level
-        #여기는 질문 큐데이터만 필요
+        #여기는 선택
         self.question = question
         self.company_name = company_name
         self.tab_name = tab_name
+        self.preserve_num = preserve_num
+        
 
 #큐에 삽입될 정보
 class ServerQueueData:
@@ -91,13 +100,14 @@ class ServerQueueData:
         self._instance_id = ServerQueueData._counter
         self.type = item.type
         self.user_id = item.user_id
-    
+        self.user_level = item.user_level
+        self.userdata_controller = UserDataController()
+        self.company_tab_name = f"{item.company_name} {item.tab_name}"
         if self.type == "question":
             #데이터 구성
             self.tab_info = self._get_tab_info(item.tab_name) #dictionary형의 재무정보/등등입니다.
             self.question:str= item.question # type: ignore
             self.company_name = item.company_name; self.tab_name = item.tab_name
-            self.company_tab_name = f"{item.company_name}{item.tab_name}"
             self.task_id = item.task_id
 
             #질문 저장/불러오는 컨트롤러 싱글톤 객체
@@ -126,7 +136,7 @@ class ServerQueueData:
             #컨텍스트 데이터 가져오기
             context_data = await self.embedding.get_context()
             self.processed_question = "다음의 검색된 데이터를 참고하여 질문에 답변해주세요." + context_data + "질문 :" + self.question
-            session = ChatSession(self.question,self.user_id,self.company_name,self.tab_name,self.model_name)
+            session = ChatSession(self.processed_question,self.user_id,self.company_name,self.tab_name,self.model_name)
 
             #context data 확인용
             self.context = context_data
@@ -143,15 +153,37 @@ class ServerQueueData:
                 "answer" : ans
                 }
             return res
-        
-        elif self.type == "db":
-            #!!! == DB에서 정보가져오는 로직 필요
 
+        elif self.type == "prev_qna_by_company" or self.type == "prev_qna_session":
+            qna_list = []
+            if self.type == "prev_qna_by_company":
+                qna_list =self.userdata_controller.get_qna(self.user_id,self.company_tab_name)
+            elif self.type == "prev_qna_session":
+                qna_list =self.userdata_controller.get_sessions(self.user_id)
+
+            size = len(qna_list)
+            qna_dict_list = []
+            key_name = ["user_id", "question","answer", "company_tab_name","created_time"]
+            for tp in qna_list:
+                qna_dict = {}
+                for i in range(len(tp)):
+                    qna_dict[key_name[i]] = tp[i]
+                qna_dict_list.append(qna_dict)
             return {
                 "status" : "200",
-                "answer":"None",
+                "size":size,
+                "list":qna_dict_list
                 }
-        
+        elif self.type == "delete_session":
+            response = {}
+            try:
+                self.userdata_controller.delete_session(self.user_id,self.company_tab_name,0)
+                response["status"] = "Sucess"
+            except Exception as e:
+                Debuger.printc(f"Delete fail : {e}")
+                response["status"] = f"Delete fail : {e}"
+            finally:
+                return response
         else:
             return {"status":"200","answer" : "None"}
 

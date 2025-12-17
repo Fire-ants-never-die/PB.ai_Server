@@ -62,14 +62,45 @@ async def client_ask(req:ClientRequest):
 
     return response
 
-@app.post('/prevQnA')
-async def get_krx(req:ClientRequest):
+@app.post('/prevqna/company')
+async def get_prev_qna_company(req:ClientRequest):
     task_id = str(uuid.uuid4())
     queue_data = ServerQueueData(QueueItem(
-        type = "db",
+        type = "prev_qna_by_company",
+        task_id =task_id,
+        user_id=req.user_id,
+        company_name=req.company_name,
+        tab_name=req.tab_name,
+        user_level= 1))
+    response = await scon.put_task(queue_data)
+
+    return response
+
+
+@app.post('/prevqna/session')
+async def get_prev_qna_session(req:ClientRequest):
+    task_id = str(uuid.uuid4())
+    queue_data = ServerQueueData(QueueItem(
+        type = "prev_qna_session",
         task_id =task_id,
         user_id=req.user_id,
         user_level= 1))
     response = await scon.put_task(queue_data)
 
     return response
+
+@app.post('/prevqna/delete')
+async def delete_prev_qna_session(req:ClientRequest):
+    task_id = str(uuid.uuid4())
+    queue_data = ServerQueueData(QueueItem(
+        type = "delete_session",
+        task_id =task_id,
+        user_id=req.user_id,
+        company_name=req.company_name,
+        tab_name=req.tab_name,
+        user_level= 1,
+        ))
+    response = await scon.put_task(queue_data)
+
+    return response
+

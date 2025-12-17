@@ -14,11 +14,8 @@ class GPT:
         data_controller = DataController()
         __api_key = data_controller.get_env("GPT_API_KEY")
 
-        meta_path = os.path.join(dir,"meta.json")
-        with open(meta_path,'r',encoding="utf-8") as f:
-            self.meta = json.load(f)
 
-        self.system_content = self.meta["system-content"]
+        self.system_content = "재무데이터를 잘 설명해주는 도우미야"
         
 
         try:
@@ -85,7 +82,7 @@ class ChatSession:
         self.msg_list.append({'role':'user',"content":self.question})
         response = await self.client.chat.completions.create(model = self.model, messages=self.msg_list) # type: ignore
         answer = response.choices[0].message.content
-        self.msg_list.append({'role':'user',"content":answer})
+        self.msg_list.append({'role':'user',"content":answer}) # type: ignore
 
         self.log_data.set_qna(self.user_id,self.question,answer,self.company_tab_name,datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         
