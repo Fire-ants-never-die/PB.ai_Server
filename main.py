@@ -1,11 +1,12 @@
 import asyncio
 import uuid
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from program_tool import *
 from ai.ai_chatting_queue_controller import *
 from data.data_controller import DataController
 from contextlib import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware
 
 class ClientRequest(BaseModel):
     user_id:str
@@ -13,42 +14,62 @@ class ClientRequest(BaseModel):
     tab_name:str
     company_name:str
 
+#========[전처리]=====
 
+scon = ServerQueueController(2,1000)
+dcon = DataController()
 
-@app.post('/ask')
-async def client_ask(self,req:ClientRequest):
-    task_id = str(uuid.uuid4())
-    queue_data = ChattingQueueData(
-        user_id=req.user_id,
-        question= req.question,
-        tab_name= req.tab_name,
-        company_name=req.company_name,
-        user_level= 1
-        )
-
-    await qcon.put_task(queue_data)
-
-    return {
-        "task_id" : task_id,
-        "status" : "queued ok"
-    }
-
-
+# task_results = {}
+active_connections = {}
 
 #==========[execute server]========
 
-qcon = AIChattingQueueController(2,1000)
-dcon = DataController()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("server start")
-    await qcon.run()
+    await scon.run()
     yield
 
     print("server shut down")
-    await qcon.stop()
-    await asyncio.gather(*qcon.workers,return_exceptions=True)
+    await scon.stop()
+    await asyncio.gather(*scon.workers,return_exceptions=True)
 
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:5500"],  # 프론트 주소
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+
+@app.post('/ask')
+async def client_ask(req:ClientRequest):
+    task_id = str(uuid.uuid4())
+    queue_data = ServerQueueData(QueueItem(
+        type = "question",
+        task_id = task_id,
+        user_id=req.user_id,
+        question= req.question,
+        tab_name= req.tab_name,
+        company_name=req.company_name,
+        user_level= 1))
+    response = await scon.put_task(queue_data)
+
+    return response
+
+@app.post('/prevQnA')
+async def get_krx(req:ClientRequest):
+    task_id = str(uuid.uuid4())
+    queue_data = ServerQueueData(QueueItem(
+        type = "db",
+        task_id =task_id,
+        user_id=req.user_id,
+        user_level= 1))
+    response = await scon.put_task(queue_data)
+
+    return response
