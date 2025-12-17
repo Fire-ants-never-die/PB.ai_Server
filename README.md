@@ -10,9 +10,11 @@
 ### (1) 실행법
 #### 사전준비
 
-필요한 패키지를 설치합니다. 본 문서 (3)번 참조
+필요한 패키지를 설치합니다. 본 문서 (3)번 참조 (임시 백엔드는 순번앞에* 붙여진 패키지만 설치)
 
 .env 파일과 data폴더를 따로 전달받아서 최상위 디렉토리에 넣어두고, 프로그램을 실행해야 합니다
+
+(임시백엔드용으로는 그냥 )
 
 #### 실행
 
@@ -35,19 +37,19 @@ uvicorn main:app --reload
 
 2.json  : json              (이거 기본 패키지인가..?)     메타 데이터 관리
 
-3.pandas            pip install pandas                 데이터 가공
+*3.pandas            pip install pandas                 데이터 가공
 
-4.openai            pip install opneai                 gpt 연결, 임베딩 api
+*4.openai            pip install opneai                 gpt 연결, 임베딩 api
 
-5.chromadb          pip install chromadb               임베딩 벡터 저장을 위한 벡터db
+*5.chromadb          pip install chromadb               임베딩 벡터 저장을 위한 벡터db
 
-5.tiktoken          pip install tiktoken               open api 사용을 위한 토큰 분리
+*6.tiktoken          pip install tiktoken               open api 사용을 위한 토큰 분리
 
-6.financedatareader pip install finance-datareader     주가정보크롤링1
+*7.financedatareader pip install finance-datareader     주가정보크롤링1
 
-7.pykrx :           pip install pykrx                  주가정보크롤링2
+*8.pykrx :           pip install pykrx                  주가정보크롤링2
 
-8.env :             pip install python-dotenv          api_key 환경변수로 관리 (아나콘다는 기본설치됨을 확인)
+*9.env :             pip install python-dotenv          api_key 환경변수로 관리 (아나콘다는 기본설치됨을 확인)
 
 ### (4) 기타
 
