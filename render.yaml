@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: pb-ai-server
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: GPT_API_KEY
+        sync: false  # 수동으로 설정해야 함
+      - key: DART_API_KEY
+        sync: false  # 선택사항
+    plan: free  # 무료 플랜

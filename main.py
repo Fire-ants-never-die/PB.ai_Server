@@ -45,7 +45,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Health Check (배포용)
+@app.get('/health')
+async def health_check():
+    return {"status": "healthy", "message": "PB.ai Server is running"}
 
+@app.get('/')
+async def root():
+    return {"message": "PB.ai Server API", "docs": "/docs"}
 
 @app.post('/ask')
 async def client_ask(req:ClientRequest):
@@ -103,4 +110,3 @@ async def delete_prev_qna_session(req:ClientRequest):
     response = await scon.put_task(queue_data)
 
     return response
-
