@@ -39,7 +39,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5500"],  # 프론트 주소
+    allow_origins=[
+        "http://127.0.0.1:5500",      # 로컬 테스트
+        "http://localhost:5173",       # Vite 개발 서버
+        "https://pb-ai-web.vercel.app/",    # 프로덕션 프론트엔드
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
