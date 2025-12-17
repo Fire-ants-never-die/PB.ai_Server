@@ -1,3 +1,7 @@
+
+
+# Request 예시들입니다. 
+
 POST http://localhost:8000/ask
 Content-Type: application/json 
 
@@ -19,3 +23,25 @@ Content-Type: application/json
     "company_name":"lg에너지솔루션"
 }
 
+
+###
+POST http://localhost:8000/prevqna/company
+Content-Type: application/json
+
+{
+    "user_id":"byeongsin123",
+    "question":"어흥!",
+    "tab_name":"report_overview",
+    "company_name":"lg에너지솔루션"
+}
+
+###
+POST http://localhost:8000/prevqna/delete
+Content-Type: application/json
+
+{
+    "user_id":"byeongsin123",
+    "question":"어흥!",
+    "tab_name":"report_overview",
+    "company_name":"lg에너지솔루션"
+}
