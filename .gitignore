@@ -2,6 +2,7 @@
 __pycache__/
 test.py
 data/
+!data/data_controller.py
 docs_cache/
 ai/key.json
 ai/test.py
