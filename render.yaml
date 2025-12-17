@@ -6,7 +6,7 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: 3.11
       - key: GPT_API_KEY
         sync: false  # 수동으로 설정해야 함
       - key: DART_API_KEY
