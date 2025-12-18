@@ -70,12 +70,11 @@ class MemoryTrackingPriorityQueue(asyncio.PriorityQueue):
 class QueueItem:
     def __init__(
             #필수
-            self,type:str,task_id:str,user_id:str,user_level:int,
+            self,type:str,user_id:str,user_level:int,
             #선택
             #  - ai 질문 or 질답기록조회 or 기록삭제
-            question=None,company_name=None,tab_name=None,preserve_num:int=0) -> None:
+            question="",company_name="",tab_name="",preserve_num:int=0) -> None:
         self.type = type
-        self.task_id = task_id
         self.user_id = user_id
         self.user_level = user_level
         #여기는 선택
@@ -108,7 +107,6 @@ class ServerQueueData:
             self.tab_info = self._get_tab_info(item.tab_name) #dictionary형의 재무정보/등등입니다.
             self.question:str= item.question # type: ignore
             self.company_name = item.company_name; self.tab_name = item.tab_name
-            self.task_id = item.task_id
 
             #질문 저장/불러오는 컨트롤러 싱글톤 객체
             self.userdata_controller = UserDataController()
@@ -142,9 +140,7 @@ class ServerQueueData:
             self.context = context_data
             try:
                 ans = await session.ask()
-            except:
-                ans = "GPT 답변이 없습니다."
-            res = {
+                res = {
                 "status" : "200",
                 "user_id" : self.user_id,
                 "company_name" : self.company_name,
@@ -152,6 +148,12 @@ class ServerQueueData:
                 "question" : self.question,
                 "answer" : ans
                 }
+            except:
+                ans = "GPT 답변이 없습니다."
+                res ={
+                    "status" : f"500 : {ans}"
+                }
+            
             return res
 
         elif self.type == "prev_qna_by_company" or self.type == "prev_qna_session":
@@ -185,17 +187,14 @@ class ServerQueueData:
             finally:
                 return response
         else:
-            return {"status":"200","answer" : "None"}
+            return {"status":"200"}
 
     #생성자에서 쓰입니다.
-    def _get_tab_info(self,tab_name) -> dict:
-        info = {
-            "밥": "한국인은 밥심"
-        }
-
-        #db에서 긁어와서 처리하고 보내주기. (RAG)
+    def _get_tab_info(self,ticker) -> dict:
+        info = self.userdata_controller.get_mvp_company_data(ticker)
 
         return info
+
 
 
 #채팅 큐 관리 (일단 대충 크기는 1000)

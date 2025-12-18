@@ -29,6 +29,11 @@ class UserDataController:
             """)
         self.con.commit()
     
+    def get_mvp_company_data(self,ticker):
+        with open(f'{ticker}.json', 'r', encoding='utf-8') as f:
+            cdict = json.load(f)
+        return cdict
+
     def set_question(self,user_id,question,company_tab_name,created_time):
         try:
             self.cursor.execute("""
