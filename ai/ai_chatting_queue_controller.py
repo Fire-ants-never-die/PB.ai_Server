@@ -104,7 +104,7 @@ class ServerQueueData:
         self.company_tab_name = f"{item.company_name} {item.tab_name}"
         if self.type == "question":
             #데이터 구성
-            self.tab_info = self._get_tab_info(item.company_name) #dictionary형의 재무정보/등등입니다.
+            self.tab_info = self._get_tab_info(item.company_name,item.tab_name) #dictionary형의 재무정보/등등입니다.
             self.question:str= item.question # type: ignore
             self.company_name = item.company_name; self.tab_name = item.tab_name
 
@@ -122,6 +122,7 @@ class ServerQueueData:
 
             #context data 확인용
             self.context = ""
+        self.name_to_ticker = {"농심":"","CJ제일제당":"097950"}
     
     #큐에 인스턴스가 들어가고 우선순위가 같을때 우선권을 비교결정 하기 위한 메서드입니다.
     def __lt__(self,other):
@@ -132,7 +133,7 @@ class ServerQueueData:
         if self.type == "question":
             #RAG
             #컨텍스트 데이터 가져오기
-            context_data = await self.embedding.get_context()
+            context_data = await self.embedding.get_context(self.name_to_ticker[self.company_name])
             self.processed_question = "다음의 검색된 데이터를 참고하여 질문에 답변해주세요." + context_data + "질문 :" + self.question
             session = ChatSession(self.processed_question,self.user_id,self.company_name,self.tab_name,self.model_name)
 
@@ -190,13 +191,12 @@ class ServerQueueData:
             return {"status":"200"}
 
     #생성자에서 쓰입니다.
-    def _get_tab_info(self,name) -> dict:
-        company_name = {
+    def _get_tab_info(self,company_name,tab_name) -> dict:
+        company_name_decoder = {
             "농심":"004370",
             "CJ제일제당":"097950"
         }
-        info = self.userdata_controller.get_mvp_company_data(company_name[name])
-
+        info = self.userdata_controller.get_mvp_company_data(company_name_decoder[company_name])
         return info
 
 

@@ -3,6 +3,7 @@ import pandas as pd
 from ai.chunking import Chunking,chunk_dict_data
 from ai.prompt import GPT
 import chromadb
+from ai.local_embedding import LocalChromaDB
 
 class Embedding:
 
@@ -14,26 +15,28 @@ class Embedding:
         self.question = question
         self.context_dict = context_dict
         # ====[답변 품질에 영향을 주는 변수] ===
-        self.model= "text-embedding-3-small"
+        self.model= "text-embedding-3-large"
         self.k = 10   #추출할 정보갯수. 너무 적으면 RAG에 쓰이는 데이터가 적어지고, 너무 많으면 답변속도 저하 혹은 쓸데 없는 정보가 ai 방해
-        
+        self.local_db = LocalChromaDB()
 
     #임베딩 & 로컬 메모리 저장 (사용자 질문 임베딩, 리포트 임베딩)
     #인자로 들어가는 정보들은, 불규칙적 일 가능성이 높습니다.
     # 따라서 청킹은 dictionary기반의 key:value형태로 잘라지되, value 또한 dictionay일 가능성이 있으므로
     # chunking.py에서 chunking이 재귀적으로 이루어집니다. 
-    async def get_context(self) -> str:
-        chunk = chunk_dict_data(self.context_dict)
+    async def get_context(self,ticker) -> str:
+        # chunk = chunk_dict_data(self.context_dict)
         vector = []
-        for t in chunk:
-            res = await self.client.embeddings.create(model=self.model,input=t) # type: ignore
-            vec = res.data[0].embedding
-            vector.append(vec)
+        # for t in chunk:
+        #     res = await self.client.embeddings.create(model=self.model,input=t) # type: ignore
+        #     vec = res.data[0].embedding
+        #     vector.append(vec)
         try:
-            chroma = chromadb.Client()
-            collection = chroma.get_or_create_collection(name = "temp")
-            for i ,(t,e) in enumerate(zip(chunk,vector)):
-                collection.add(documents=[t],embeddings=[e],ids=[str(i)])
+
+            # chroma = chromadb.Client()
+            # collection = chroma.get_or_create_collection(name = "temp")
+            # for i ,(t,e) in enumerate(zip(chunk,vector)):
+            #     collection.add(documents=[t],embeddings=[e],ids=[str(i)])
+            collection = self.local_db.get_db(ticker)
             
             q_emb_coroutine = await self.client.embeddings.create(model = self.model ,input=self.question) # type: ignore
             q_emb = q_emb_coroutine.data[0].embedding # type: ignore
@@ -83,3 +86,4 @@ class Embedding:
             embeddings.append(emb.data[0].embedding)
         
         return embeddings
+

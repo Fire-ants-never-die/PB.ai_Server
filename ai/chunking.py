@@ -11,37 +11,77 @@ def token_counter(text) -> int:
     return len(enc.encode(text))
 
 #정해지지 않은 형식의 dictionary data 청킹 함수
-def chunk_dict_data(data:dict) -> list:
-    res = [] 
+# def chunk_dict_data2(data:dict) -> list:
+#     res = [] 
 
-    #재귀 탐색 함수
-    def rescursive_search(dict_data,keys):
-        for key,value in dict_data.items():
-            current_key = keys + [key]
-            if type(value) == dict:
-                rescursive_search(value,current_key)
-            #value가 dictionary가 아니라면, list거나 ㄹㅇvalue 일 것이므로 [key1,key2...] : value 형식으로 텍스트 저장
-            else:
-                adress = ""
-                for i in range(len(current_key)):
-                    adress += str(current_key[i])
-                    if i != len(current_key) - 1:
-                        adress += ","
-                    else:
-                        adress += ": "
-                if type(value) == list:
-                    adress += "["
-                    for i in range(len(value)):
-                        adress += f"{str(i+1)}.{value[i]} "
-                        if i != len(value) - 1:
-                            adress += ","
-                        else:
-                            adress += "]"
-                else:
-                    adress += str(value)
-                res.append(adress)
-    rescursive_search(data,[])
-    return res
+#     #재귀 탐색 함수
+#     def rescursive_search(dict_data,keys):
+#         for key,value in dict_data.items():
+#             current_key = keys + [key]
+#             if type(value) == dict:
+#                 rescursive_search(value,current_key)
+#             #value가 dictionary가 아니라면, list거나 ㄹㅇvalue 일 것이므로 [key1,key2...] : value 형식으로 텍스트 저장
+#             else:
+#                 adress = ""
+#                 for i in range(len(current_key)):
+#                     adress += str(current_key[i])
+#                     if i != len(current_key) - 1:
+#                         adress += ","
+#                     else:
+#                         adress += ": "
+#                 if type(value) == list:
+#                     adress += "["
+#                     for i in range(len(value)):
+#                         adress += f"{str(i+1)}.{value[i]} "
+#                         if i != len(value) - 1:
+#                             adress += ","
+#                         else:
+#                             adress += "]"
+#                 else:
+#                     adress += str(value)
+#                 res.append(adress)
+#     rescursive_search(data,[])
+#     return res
+
+def stringify(value):
+    if isinstance(value, dict):
+        return " | ".join(
+            f"{k}={stringify(v)}" for k, v in value.items()
+        )
+    elif isinstance(value, list):
+        return ", ".join(stringify(v) for v in value)
+    else:
+        return str(value)
+
+def chunk_dict_by_depth(
+    data: dict,
+    max_depth: int = 2,
+    sep: str = "."
+) -> list[str]:
+    chunks = []
+
+    def dfs(current, path, depth):
+        # depth가 max_depth에 도달하면 청킹
+        if depth == max_depth:
+            key_path = sep.join(path)
+            value_str = stringify(current)
+            chunks.append(f"{key_path}: {value_str}")
+            return
+
+        # dict이면 계속 순회
+        if isinstance(current, dict):
+            for k, v in current.items():
+                dfs(v, path + [str(k)], depth + 1)
+        else:
+            # depth 이전에 leaf 값이 나오면 그대로 처리
+            key_path = sep.join(path)
+            chunks.append(f"{key_path}: {stringify(current)}")
+
+    dfs(data, [], 0)
+    return chunks
+
+def chunk_dict_data(dt:dict)->list:
+    return chunk_dict_by_depth(dt)
 
 class Chunking:
 
