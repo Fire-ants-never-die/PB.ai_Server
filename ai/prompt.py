@@ -14,8 +14,9 @@ class GPT:
         data_controller = DataController()
         __api_key = data_controller.get_env("GPT_API_KEY")
 
-
+        
         self.system_content = "재무데이터를 잘 설명해주는 도우미야"
+
         
 
         try:

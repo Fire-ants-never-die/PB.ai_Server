@@ -8,7 +8,7 @@ Content-Type: application/json
 {
     "user_id":"jinu123",
     "question":"안녕!",
-    "tab_name":"report_overview",
+    "tab_name":"리포트버뷰",
     "company_name":"CJ제일제당"
 }
 
@@ -42,7 +42,7 @@ Content-Type: application/json
 {
     "user_id":"byeongsin123",
     "question":"어흥!",
-    "tab_name":"report_overview",
+    "tab_name":"리포트오버뷰",
     "company_name":"lg에너지솔루션"
 }
 
