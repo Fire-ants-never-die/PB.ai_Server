@@ -114,7 +114,7 @@ async def delete_prev_qna_session(req:ClientRequest):
 #=================
 
 def get_company_data(ticker):
-        with open(f'{ticker}.json', 'r', encoding='utf-8') as f:
+        with open(f'data/{ticker}.json', 'r', encoding='utf-8') as f:
             cdict = json.load(f)
         return cdict
 
@@ -128,7 +128,7 @@ def get_company_profile(ticker:str):
         temp = {}
         temp["label"] = k
         temp["value"] = profile[v]
-        profile.append(temp)
+        profile_list.append(temp)
     response = {
         "companyCode":profile["티커"],
         "companyName":profile["기업이름"],
@@ -446,20 +446,20 @@ def get_company_financial_analysis_details(ticker:str):
                 },
 
                 {
-                    "name": "비유동장기적합율",
+                    "name": "비유동장기적합률",
                     "values": {
-                    "year2023": st["비유동장기적합율"]["데이터"],
-                    "timeSeriesAverage": f'{(float(st["비유동장기적합율"]["시계열평균분자"])/float(st["비유동장기적합율"]["시계열평균분모"]))/100}%',
-                    "industryMedian": f"{st['비유동장기적합율']['업종중위수']}%",
-                    "timeSeriesScore": st["비유동장기적합율"]["시계열점수"],
-                    "industryScore": st["비유동장기적합율"]["업종점수"]
+                    "year2023": st["비유동장기적합률"]["데이터"],
+                    "timeSeriesAverage": f'{(float(st["비유동장기적합률"]["시계열평균분자"])/float(st["비유동장기적합률"]["시계열평균분모"]))/100}%',
+                    "industryMedian": f"{st['비유동장기적합률']['업종중위수']}%",
+                    "timeSeriesScore": st["비유동장기적합률"]["시계열점수"],
+                    "industryScore": st["비유동장기적합률"]["업종점수"]
                     },
                     "children": [
                     {
                         "name": "비유동자산",
                         "values": {
-                        "year2023": st["비유동장기적합율"]["데이터분자값"],
-                        "timeSeriesAverage": st["비유동장기적합율"]["시계열평균분자"],
+                        "year2023": st["비유동장기적합률"]["데이터분자값"],
+                        "timeSeriesAverage": st["비유동장기적합률"]["시계열평균분자"],
                         "industryMedian": "-",
                         "timeSeriesScore": "-",
                         "industryScore": "-"
@@ -469,8 +469,8 @@ def get_company_financial_analysis_details(ticker:str):
                     {
                         "name": "자본총계+비유동부채",
                         "values": {
-                        "year2023": st["비유동장기적합율"]["데이터분모값"],
-                        "timeSeriesAverage": st["비유동장기적합율"]["시계열평균분모"],
+                        "year2023": st["비유동장기적합률"]["데이터분모값"],
+                        "timeSeriesAverage": st["비유동장기적합률"]["시계열평균분모"],
                         "industryMedian": "-",
                         "timeSeriesScore": "-",
                         "industryScore": "-"

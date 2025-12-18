@@ -104,7 +104,7 @@ class ServerQueueData:
         self.company_tab_name = f"{item.company_name} {item.tab_name}"
         if self.type == "question":
             #데이터 구성
-            self.tab_info = self._get_tab_info(item.tab_name) #dictionary형의 재무정보/등등입니다.
+            self.tab_info = self._get_tab_info(item.company_name) #dictionary형의 재무정보/등등입니다.
             self.question:str= item.question # type: ignore
             self.company_name = item.company_name; self.tab_name = item.tab_name
 
@@ -190,8 +190,12 @@ class ServerQueueData:
             return {"status":"200"}
 
     #생성자에서 쓰입니다.
-    def _get_tab_info(self,ticker) -> dict:
-        info = self.userdata_controller.get_mvp_company_data(ticker)
+    def _get_tab_info(self,name) -> dict:
+        company_name = {
+            "농심":"004370",
+            "CJ제일제당":"097950"
+        }
+        info = self.userdata_controller.get_mvp_company_data(company_name[name])
 
         return info
 

@@ -30,7 +30,10 @@ class UserDataController:
         self.con.commit()
     
     def get_mvp_company_data(self,ticker):
-        with open(f'{ticker}.json', 'r', encoding='utf-8') as f:
+        dir = os.path.abspath(os.path.dirname(__file__))
+        path = os.path.join(dir,f'{ticker}.json')
+        Debuger.printc(path)
+        with open(path, 'r', encoding='utf-8') as f:
             cdict = json.load(f)
         return cdict
 

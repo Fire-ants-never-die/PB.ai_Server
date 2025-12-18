@@ -9,7 +9,7 @@ Content-Type: application/json
     "user_id":"jinu123",
     "question":"안녕!",
     "tab_name":"report_overview",
-    "company_name":"lg에너지솔루션"
+    "company_name":"CJ제일제당"
 }
 
 ###
@@ -45,3 +45,13 @@ Content-Type: application/json
     "tab_name":"report_overview",
     "company_name":"lg에너지솔루션"
 }
+
+
+###
+GET http://localhost:8000/companies/097950/financial-analysis-details
+Content-Type: application/json
+
+
+###
+GET http://localhost:8000/companies/097950/profile
+Content-Type: application/json
