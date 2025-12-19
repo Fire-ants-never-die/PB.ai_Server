@@ -40,9 +40,8 @@ app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://127.0.0.1:5500",      # 로컬 테스트
-        "http://localhost:5173",       # Vite 개발 서버
-        "https://pb-ai-web.vercel.app/",    # 프로덕션 프론트엔드
+        "http://localhost:5173",
+        "https://pb-ai-web.vercel.app",  # trailing slash 제거
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -121,7 +120,7 @@ def get_company_data(ticker):
         except FileNotFoundError:
             return None
 
-@app.get('/companies/{ticker}/profile')
+@app.get('/api/v1/companies/{ticker}/profile')
 def get_company_profile(ticker:str):
     data = get_company_data(ticker)
     if data is None:
@@ -142,7 +141,7 @@ def get_company_profile(ticker:str):
     }
     return response
 
-@app.get('/companies/{ticker}/sales-composition')
+@app.get('/api/v1/companies/{ticker}/sales-composition')
 def get_company_sales_composition(ticker:str):
     data = get_company_data(ticker)
     if data is None:
@@ -205,7 +204,7 @@ def parse_korean_number(text):
 
     return int(total)
 
-@app.get('/companies/{ticker}/financial-overview')
+@app.get('/api/v1/companies/{ticker}/financial-overview')
 def get_company_financial_overview(ticker:str):
     data = get_company_data(ticker)
     if data is None:
@@ -250,7 +249,7 @@ def get_company_financial_overview(ticker:str):
 
     return response
 
-@app.get('/companies/{ticker}/financial-health')
+@app.get('/api/v1/companies/{ticker}/financial-health')
 def get_company_financial_health(ticker:str):
     data = get_company_data(ticker)
     if data is None:
@@ -276,7 +275,7 @@ def get_company_financial_health(ticker:str):
     }
     return response
 
-@app.get('/companies/{ticker}/industry-description')
+@app.get('/api/v1/companies/{ticker}/industry-description')
 def get_company_industry_description(ticker:str):
     data = get_company_data(ticker)
     if data is None:
@@ -291,7 +290,7 @@ def get_company_industry_description(ticker:str):
     }
     return response
 
-@app.get('/companies/{ticker}/financial-ratio-judgment')
+@app.get('/api/v1/companies/{ticker}/financial-ratio-judgment')
 def get_company_financial_ratio_judgment(ticker:str):
     data = get_company_data(ticker)
     if data is None:
@@ -331,7 +330,7 @@ def get_company_financial_ratio_judgment(ticker:str):
     return response
 
 
-@app.get('/companies/{ticker}/financial-analysis-details')
+@app.get('/api/v1/companies/{ticker}/financial-analysis-details')
 def get_company_financial_analysis_details(ticker:str):
     data = get_company_data(ticker)
     if data is None:
