@@ -352,7 +352,7 @@ def get_company_financial_analysis_details(ticker:str):
             "title": "3.1. 유동성 분석",
             "tableHeaders": [
                 { "key": "indicator", "label": "" },
-                { "key": "year2023", "label": "2023" },
+                { "key": "year2024", "label": "2024" },
                 { "key": "timeSeriesAverage", "label": "시계열평균" },
                 { "key": "industryMedian", "label": "업종중위수" },
                 { "key": "timeSeriesScore", "label": "시계열점수" },
@@ -363,7 +363,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "유동비율",
                     "values": {
-                    "year2023": st["유동비율"]["데이터"],
+                    "year2024": st["유동비율"]["데이터"],
                     "timeSeriesAverage": f'{(float(st["유동비율"]["시계열평균분자"])/float(st["유동비율"]["시계열평균분모"]))/100}%',
                     "industryMedian": f"{st['유동비율']['업종중위수']}%",
                     "timeSeriesScore": st["유동비율"]["시계열점수"],
@@ -373,7 +373,7 @@ def get_company_financial_analysis_details(ticker:str):
                     {
                         "name": "유동자산",
                         "values": {
-                        "year2023": st["유동비율"]["데이터분자값"],
+                        "year2024": st["유동비율"]["데이터분자값"],
                         "timeSeriesAverage": st["유동비율"]["시계열평균분자"],
                         "industryMedian": "-",
                         "timeSeriesScore": "-",
@@ -384,7 +384,7 @@ def get_company_financial_analysis_details(ticker:str):
                     {
                         "name": "유동부채",
                         "values": {
-                        "year2023": st["유동비율"]["데이터분모값"],
+                        "year2024": st["유동비율"]["데이터분모값"],
                         "timeSeriesAverage": st["유동비율"]["시계열평균분모"],
                         "industryMedian": "-",
                         "timeSeriesScore": "-",
@@ -397,7 +397,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "당좌비율",
                     "values": {
-                    "year2023": st["당좌비율"]["데이터"],
+                    "year2024": st["당좌비율"]["데이터"],
                     "timeSeriesAverage": f'{(float(st["당좌비율"]["시계열평균분자"])/float(st["당좌비율"]["시계열평균분모"]))/100}%',
                     "industryMedian": f"{st['당좌비율']['업종중위수']}%",
                     "timeSeriesScore": st["당좌비율"]["시계열점수"],
@@ -407,7 +407,7 @@ def get_company_financial_analysis_details(ticker:str):
                     {
                         "name": "당좌자산",
                         "values": {
-                        "year2023": st["당좌비율"]["데이터분자값"],
+                        "year2024": st["당좌비율"]["데이터분자값"],
                         "timeSeriesAverage": st["당좌비율"]["시계열평균분자"],
                         "industryMedian": "-",
                         "timeSeriesScore": "-",
@@ -418,7 +418,7 @@ def get_company_financial_analysis_details(ticker:str):
                     {
                         "name": "유동부채",
                         "values": {
-                        "year2023": st["당좌비율"]["데이터분모값"],
+                        "year2024": st["당좌비율"]["데이터분모값"],
                         "timeSeriesAverage": st["당좌비율"]["시계열평균분모"],
                         "industryMedian": "-",
                         "timeSeriesScore": "-",
@@ -432,7 +432,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "현금비율",
                     "values": {
-                    "year2023": st["현금비율"]["데이터"],
+                    "year2024": st["현금비율"]["데이터"],
                     "timeSeriesAverage": f'{(float(st["현금비율"]["시계열평균분자"])/float(st["현금비율"]["시계열평균분모"]))/100}%',
                     "industryMedian": f"{st['현금비율']['업종중위수']}%",
                     "timeSeriesScore": st["현금비율"]["시계열점수"],
@@ -442,7 +442,7 @@ def get_company_financial_analysis_details(ticker:str):
                     {
                         "name": "현금및현금성자산",
                         "values": {
-                        "year2023": st["현금비율"]["데이터분자값"],
+                        "year2024": st["현금비율"]["데이터분자값"],
                         "timeSeriesAverage": st["현금비율"]["시계열평균분자"],
                         "industryMedian": "-",
                         "timeSeriesScore": "-",
@@ -453,7 +453,7 @@ def get_company_financial_analysis_details(ticker:str):
                     {
                         "name": "유동부채",
                         "values": {
-                        "year2023": st["현금비율"]["데이터분모값"],
+                        "year2024": st["현금비율"]["데이터분모값"],
                         "timeSeriesAverage": st["현금비율"]["시계열평균분모"],
                         "industryMedian": "-",
                         "timeSeriesScore": "-",
@@ -467,7 +467,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "순운전자본대총자본",
                     "values": {
-                    "year2023": st["순운전자본대총자본"]["데이터"],
+                    "year2024": st["순운전자본대총자본"]["데이터"],
                     "timeSeriesAverage": f'{(float(st["순운전자본대총자본"]["시계열평균분자"])/float(st["순운전자본대총자본"]["시계열평균분모"]))/100}%',
                     "industryMedian": f"{st['순운전자본대총자본']['업종중위수']}%",
                     "timeSeriesScore": st["순운전자본대총자본"]["시계열점수"],
@@ -477,7 +477,7 @@ def get_company_financial_analysis_details(ticker:str):
                     {
                         "name": "유동자산+유동부채",
                         "values": {
-                        "year2023": st["순운전자본대총자본"]["데이터분자값"],
+                        "year2024": st["순운전자본대총자본"]["데이터분자값"],
                         "timeSeriesAverage": st["순운전자본대총자본"]["시계열평균분자"],
                         "industryMedian": "-",
                         "timeSeriesScore": "-",
@@ -488,7 +488,7 @@ def get_company_financial_analysis_details(ticker:str):
                     {
                         "name": "자산총계",
                         "values": {
-                        "year2023": st["순운전자본대총자본"]["데이터분모값"],
+                        "year2024": st["순운전자본대총자본"]["데이터분모값"],
                         "timeSeriesAverage": st["순운전자본대총자본"]["시계열평균분모"],
                         "industryMedian": "-",
                         "timeSeriesScore": "-",
@@ -502,7 +502,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "비유동비율",
                     "values": {
-                    "year2023": st["비유동비율"]["데이터"],
+                    "year2024": st["비유동비율"]["데이터"],
                     "timeSeriesAverage": f'{(float(st["비유동비율"]["시계열평균분자"])/float(st["비유동비율"]["시계열평균분모"]))/100}%',
                     "industryMedian": f"{st['비유동비율']['업종중위수']}%",
                     "timeSeriesScore": st["비유동비율"]["시계열점수"],
@@ -512,7 +512,7 @@ def get_company_financial_analysis_details(ticker:str):
                     {
                         "name": "비유동자산",
                         "values": {
-                        "year2023": st["비유동비율"]["데이터분자값"],
+                        "year2024": st["비유동비율"]["데이터분자값"],
                         "timeSeriesAverage": st["비유동비율"]["시계열평균분자"],
                         "industryMedian": "-",
                         "timeSeriesScore": "-",
@@ -523,7 +523,7 @@ def get_company_financial_analysis_details(ticker:str):
                     {
                         "name": "자본총계",
                         "values": {
-                        "year2023": st["비유동비율"]["데이터분모값"],
+                        "year2024": st["비유동비율"]["데이터분모값"],
                         "timeSeriesAverage": st["비유동비율"]["시계열평균분모"],
                         "industryMedian": "-",
                         "timeSeriesScore": "-",
@@ -537,7 +537,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "비유동장기적합률",
                     "values": {
-                    "year2023": st["비유동장기적합률"]["데이터"],
+                    "year2024": st["비유동장기적합률"]["데이터"],
                     "timeSeriesAverage": f'{(float(st["비유동장기적합률"]["시계열평균분자"])/float(st["비유동장기적합률"]["시계열평균분모"]))/100}%',
                     "industryMedian": f"{st['비유동장기적합률']['업종중위수']}%",
                     "timeSeriesScore": st["비유동장기적합률"]["시계열점수"],
@@ -547,7 +547,7 @@ def get_company_financial_analysis_details(ticker:str):
                     {
                         "name": "비유동자산",
                         "values": {
-                        "year2023": st["비유동장기적합률"]["데이터분자값"],
+                        "year2024": st["비유동장기적합률"]["데이터분자값"],
                         "timeSeriesAverage": st["비유동장기적합률"]["시계열평균분자"],
                         "industryMedian": "-",
                         "timeSeriesScore": "-",
@@ -558,7 +558,7 @@ def get_company_financial_analysis_details(ticker:str):
                     {
                         "name": "자본총계+비유동부채",
                         "values": {
-                        "year2023": st["비유동장기적합률"]["데이터분모값"],
+                        "year2024": st["비유동장기적합률"]["데이터분모값"],
                         "timeSeriesAverage": st["비유동장기적합률"]["시계열평균분모"],
                         "industryMedian": "-",
                         "timeSeriesScore": "-",
@@ -575,7 +575,7 @@ def get_company_financial_analysis_details(ticker:str):
             "title": "3.2. 레버리지 분석",
             "tableHeaders": [
                 { "key": "indicator", "label": "" },
-                { "key": "year2023", "label": "2023" },
+                { "key": "year2024", "label": "2024" },
                 { "key": "timeSeriesAverage", "label": "시계열평균" },
                 { "key": "industryMedian", "label": "업종중위수" },
                 { "key": "timeSeriesScore", "label": "시계열점수" },
@@ -586,7 +586,7 @@ def get_company_financial_analysis_details(ticker:str):
     {
         "name": "부채비율",
         "values": {
-        "year2023": lv["부채비율"]["데이터"],
+        "year2024": lv["부채비율"]["데이터"],
         "timeSeriesAverage": f'{(float(lv["부채비율"]["시계열평균분자"])/float(lv["부채비율"]["시계열평균분모"]))/100}%',
         "industryMedian": f"{lv['부채비율']['업종중위수']}%",
         "timeSeriesScore": lv["부채비율"]["시계열점수"],
@@ -596,7 +596,7 @@ def get_company_financial_analysis_details(ticker:str):
         {
             "name": "부채총계",
             "values": {
-            "year2023": lv["부채비율"]["데이터분자값"],
+            "year2024": lv["부채비율"]["데이터분자값"],
             "timeSeriesAverage": lv["부채비율"]["시계열평균분자"],
             "industryMedian": "-",
             "timeSeriesScore": "-",
@@ -607,7 +607,7 @@ def get_company_financial_analysis_details(ticker:str):
         {
             "name": "자본총계",
             "values": {
-            "year2023": lv["부채비율"]["데이터분모값"],
+            "year2024": lv["부채비율"]["데이터분모값"],
             "timeSeriesAverage": lv["부채비율"]["시계열평균분모"],
             "industryMedian": "-",
             "timeSeriesScore": "-",
@@ -621,7 +621,7 @@ def get_company_financial_analysis_details(ticker:str):
     {
         "name": "자기자본비율",
         "values": {
-        "year2023": lv["자기자본비율"]["데이터"],
+        "year2024": lv["자기자본비율"]["데이터"],
         "timeSeriesAverage": f'{(float(lv["자기자본비율"]["시계열평균분자"])/float(lv["자기자본비율"]["시계열평균분모"]))/100}%',
         "industryMedian": f"{lv['자기자본비율']['업종중위수']}%",
         "timeSeriesScore": lv["자기자본비율"]["시계열점수"],
@@ -631,7 +631,7 @@ def get_company_financial_analysis_details(ticker:str):
         {
             "name": "자본총계",
             "values": {
-            "year2023": lv["자기자본비율"]["데이터분자값"],
+            "year2024": lv["자기자본비율"]["데이터분자값"],
             "timeSeriesAverage": lv["자기자본비율"]["시계열평균분자"],
             "industryMedian": "-",
             "timeSeriesScore": "-",
@@ -642,7 +642,7 @@ def get_company_financial_analysis_details(ticker:str):
         {
             "name": "자산총계",
             "values": {
-            "year2023": lv["자기자본비율"]["데이터분모값"],
+            "year2024": lv["자기자본비율"]["데이터분모값"],
             "timeSeriesAverage": lv["자기자본비율"]["시계열평균분모"],
             "industryMedian": "-",
             "timeSeriesScore": "-",
@@ -656,7 +656,7 @@ def get_company_financial_analysis_details(ticker:str):
     {
         "name": "유동부채비율",
         "values": {
-        "year2023": lv["유동부채비율"]["데이터"],
+        "year2024": lv["유동부채비율"]["데이터"],
         "timeSeriesAverage": f'{(float(lv["유동부채비율"]["시계열평균분자"])/float(lv["유동부채비율"]["시계열평균분모"]))/100}%',
         "industryMedian": f"{lv['유동부채비율']['업종중위수']}%",
         "timeSeriesScore": lv["유동부채비율"]["시계열점수"],
@@ -666,7 +666,7 @@ def get_company_financial_analysis_details(ticker:str):
         {
             "name": "유동부채",
             "values": {
-            "year2023": lv["유동부채비율"]["데이터분자값"],
+            "year2024": lv["유동부채비율"]["데이터분자값"],
             "timeSeriesAverage": lv["유동부채비율"]["시계열평균분자"],
             "industryMedian": "-",
             "timeSeriesScore": "-",
@@ -677,7 +677,7 @@ def get_company_financial_analysis_details(ticker:str):
         {
             "name": "자본총계",
             "values": {
-            "year2023": lv["유동부채비율"]["데이터분모값"],
+            "year2024": lv["유동부채비율"]["데이터분모값"],
             "timeSeriesAverage": lv["유동부채비율"]["시계열평균분모"],
             "industryMedian": "-",
             "timeSeriesScore": "-",
@@ -691,7 +691,7 @@ def get_company_financial_analysis_details(ticker:str):
     {
         "name": "비유동부채비율",
         "values": {
-        "year2023": lv["비유동부채비율"]["데이터"],
+        "year2024": lv["비유동부채비율"]["데이터"],
         "timeSeriesAverage": f'{(float(lv["비유동부채비율"]["시계열평균분자"])/float(lv["비유동부채비율"]["시계열평균분모"]))/100}%',
         "industryMedian": f"{lv['비유동부채비율']['업종중위수']}%",
         "timeSeriesScore": lv["비유동부채비율"]["시계열점수"],
@@ -701,7 +701,7 @@ def get_company_financial_analysis_details(ticker:str):
         {
             "name": "비유동부채",
             "values": {
-            "year2023": lv["비유동부채비율"]["데이터분자값"],
+            "year2024": lv["비유동부채비율"]["데이터분자값"],
             "timeSeriesAverage": lv["비유동부채비율"]["시계열평균분자"],
             "industryMedian": "-",
             "timeSeriesScore": "-",
@@ -712,7 +712,7 @@ def get_company_financial_analysis_details(ticker:str):
         {
             "name": "자본총계",
             "values": {
-            "year2023": lv["비유동부채비율"]["데이터분모값"],
+            "year2024": lv["비유동부채비율"]["데이터분모값"],
             "timeSeriesAverage": lv["비유동부채비율"]["시계열평균분모"],
             "industryMedian": "-",
             "timeSeriesScore": "-",
@@ -726,7 +726,7 @@ def get_company_financial_analysis_details(ticker:str):
     {
         "name": "차입금의존도",
         "values": {
-        "year2023": lv["차입금의존도"]["데이터"],
+        "year2024": lv["차입금의존도"]["데이터"],
         "timeSeriesAverage": f'{(float(lv["차입금의존도"]["시계열평균분자"])/float(lv["차입금의존도"]["시계열평균분모"]))/100}%',
         "industryMedian": f"{lv['차입금의존도']['업종중위수']}%",
         "timeSeriesScore": lv["차입금의존도"]["시계열점수"],
@@ -736,7 +736,7 @@ def get_company_financial_analysis_details(ticker:str):
         {
             "name": "차입금(이자지급부채)",
             "values": {
-            "year2023": lv["차입금의존도"]["데이터분자값"],
+            "year2024": lv["차입금의존도"]["데이터분자값"],
             "timeSeriesAverage": lv["차입금의존도"]["시계열평균분자"],
             "industryMedian": "-",
             "timeSeriesScore": "-",
@@ -747,7 +747,7 @@ def get_company_financial_analysis_details(ticker:str):
         {
             "name": "자산총계",
             "values": {
-            "year2023": lv["차입금의존도"]["데이터분모값"],
+            "year2024": lv["차입금의존도"]["데이터분모값"],
             "timeSeriesAverage": lv["차입금의존도"]["시계열평균분모"],
             "industryMedian": "-",
             "timeSeriesScore": "-",
@@ -761,7 +761,7 @@ def get_company_financial_analysis_details(ticker:str):
     {
         "name": "차입금대매출액",
         "values": {
-        "year2023": lv["차입금대매출액"]["데이터"],
+        "year2024": lv["차입금대매출액"]["데이터"],
         "timeSeriesAverage": f'{(float(lv["차입금대매출액"]["시계열평균분자"])/float(lv["차입금대매출액"]["시계열평균분모"]))/100}%',
         "industryMedian": f"{lv['차입금대매출액']['업종중위수']}%",
         "timeSeriesScore": lv["차입금대매출액"]["시계열점수"],
@@ -771,7 +771,7 @@ def get_company_financial_analysis_details(ticker:str):
         {
             "name": "차입금(이자지급부채)",
             "values": {
-            "year2023": lv["차입금대매출액"]["데이터분자값"],
+            "year2024": lv["차입금대매출액"]["데이터분자값"],
             "timeSeriesAverage": lv["차입금대매출액"]["시계열평균분자"],
             "industryMedian": "-",
             "timeSeriesScore": "-",
@@ -782,7 +782,7 @@ def get_company_financial_analysis_details(ticker:str):
         {
             "name": "매출액",
             "values": {
-            "year2023": lv["차입금대매출액"]["데이터분모값"],
+            "year2024": lv["차입금대매출액"]["데이터분모값"],
             "timeSeriesAverage": lv["차입금대매출액"]["시계열평균분모"],
             "industryMedian": "-",
             "timeSeriesScore": "-",
@@ -805,7 +805,7 @@ def get_company_financial_analysis_details(ticker:str):
             "title": "4.1. 투자수익성 분석",
             "tableHeaders": [
                 { "key": "indicator", "label": "" },
-                { "key": "year2023", "label": "2023" },
+                { "key": "year2024", "label": "2024" },
                 { "key": "timeSeriesAverage", "label": "시계열평균" },
                 { "key": "industryMedian", "label": "업종중위수" },
                 { "key": "timeSeriesScore", "label": "시계열점수" },
@@ -816,7 +816,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "총자산세전수익률",
                 "values": {
-                "year2023": pr["총자산세전수익률"]["데이터"],
+                "year2024": pr["총자산세전수익률"]["데이터"],
                 "timeSeriesAverage": f'{(float(pr["총자산세전수익률"]["시계열평균분자"])/float(pr["총자산세전수익률"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{pr['총자산세전수익률']['업종중위수']}%",
                 "timeSeriesScore": pr["총자산세전수익률"]["시계열점수"],
@@ -826,7 +826,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "법인세비용차감전순이익",
                     "values": {
-                    "year2023": pr["총자산세전수익률"]["데이터분자값"],
+                    "year2024": pr["총자산세전수익률"]["데이터분자값"],
                     "timeSeriesAverage": pr["총자산세전수익률"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -837,7 +837,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "당기순이익",
                     "values": {
-                    "year2023": pr["총자산세전수익률"]["데이터분모값"],
+                    "year2024": pr["총자산세전수익률"]["데이터분모값"],
                     "timeSeriesAverage": pr["총자산세전수익률"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -851,7 +851,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "총자산순이익률",
                 "values": {
-                "year2023": pr["총자산순이익률"]["데이터"],
+                "year2024": pr["총자산순이익률"]["데이터"],
                 "timeSeriesAverage": f'{(float(pr["총자산순이익률"]["시계열평균분자"])/float(pr["총자산순이익률"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{pr['총자산순이익률']['업종중위수']}%",
                 "timeSeriesScore": pr["총자산순이익률"]["시계열점수"],
@@ -861,7 +861,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "당기순이익",
                     "values": {
-                    "year2023": pr["총자산순이익률"]["데이터분자값"],
+                    "year2024": pr["총자산순이익률"]["데이터분자값"],
                     "timeSeriesAverage": pr["총자산순이익률"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -872,7 +872,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "자산총계",
                     "values": {
-                    "year2023": pr["총자산순이익률"]["데이터분모값"],
+                    "year2024": pr["총자산순이익률"]["데이터분모값"],
                     "timeSeriesAverage": pr["총자산순이익률"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -886,7 +886,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "기업세전순이익률",
                 "values": {
-                "year2023": pr["기업세전순이익률"]["데이터"],
+                "year2024": pr["기업세전순이익률"]["데이터"],
                 "timeSeriesAverage": f'{(float(pr["기업세전순이익률"]["시계열평균분자"])/float(pr["기업세전순이익률"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{pr['기업세전순이익률']['업종중위수']}%",
                 "timeSeriesScore": pr["기업세전순이익률"]["시계열점수"],
@@ -896,7 +896,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "법인세비용차감전순이익+이자비용",
                     "values": {
-                    "year2023": pr["기업세전순이익률"]["데이터분자값"],
+                    "year2024": pr["기업세전순이익률"]["데이터분자값"],
                     "timeSeriesAverage": pr["기업세전순이익률"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -907,7 +907,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "당기순이익+이자비용",
                     "values": {
-                    "year2023": pr["기업세전순이익률"]["데이터분모값"],
+                    "year2024": pr["기업세전순이익률"]["데이터분모값"],
                     "timeSeriesAverage": pr["기업세전순이익률"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -921,7 +921,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "기업순이익률",
                 "values": {
-                "year2023": pr["기업순이익률"]["데이터"],
+                "year2024": pr["기업순이익률"]["데이터"],
                 "timeSeriesAverage": f'{(float(pr["기업순이익률"]["시계열평균분자"])/float(pr["기업순이익률"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{pr['기업순이익률']['업종중위수']}%",
                 "timeSeriesScore": pr["기업순이익률"]["시계열점수"],
@@ -931,7 +931,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "당기순이익+이자비용",
                     "values": {
-                    "year2023": pr["기업순이익률"]["데이터분자값"],
+                    "year2024": pr["기업순이익률"]["데이터분자값"],
                     "timeSeriesAverage": pr["기업순이익률"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -942,7 +942,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "자산총계",
                     "values": {
-                    "year2023": pr["기업순이익률"]["데이터분모값"],
+                    "year2024": pr["기업순이익률"]["데이터분모값"],
                     "timeSeriesAverage": pr["기업순이익률"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -956,7 +956,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "자기자본세전순이익률",
                 "values": {
-                "year2023": pr["자기자본세전순이익률"]["데이터"],
+                "year2024": pr["자기자본세전순이익률"]["데이터"],
                 "timeSeriesAverage": f'{(float(pr["자기자본세전순이익률"]["시계열평균분자"])/float(pr["자기자본세전순이익률"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{pr['자기자본세전순이익률']['업종중위수']}%",
                 "timeSeriesScore": pr["자기자본세전순이익률"]["시계열점수"],
@@ -966,7 +966,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "법인세비용차감전순이익",
                     "values": {
-                    "year2023": pr["자기자본세전순이익률"]["데이터분자값"],
+                    "year2024": pr["자기자본세전순이익률"]["데이터분자값"],
                     "timeSeriesAverage": pr["자기자본세전순이익률"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -977,7 +977,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "자본총계",
                     "values": {
-                    "year2023": pr["자기자본세전순이익률"]["데이터분모값"],
+                    "year2024": pr["자기자본세전순이익률"]["데이터분모값"],
                     "timeSeriesAverage": pr["자기자본세전순이익률"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -991,7 +991,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "자본금세전순이익률",
                 "values": {
-                "year2023": pr["자본금세전순이익률"]["데이터"],
+                "year2024": pr["자본금세전순이익률"]["데이터"],
                 "timeSeriesAverage": f'{(float(pr["자본금세전순이익률"]["시계열평균분자"])/float(pr["자본금세전순이익률"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{pr['자본금세전순이익률']['업종중위수']}%",
                 "timeSeriesScore": pr["자본금세전순이익률"]["시계열점수"],
@@ -1001,7 +1001,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "법인세비용차감전순이익",
                     "values": {
-                    "year2023": pr["자본금세전순이익률"]["데이터분자값"],
+                    "year2024": pr["자본금세전순이익률"]["데이터분자값"],
                     "timeSeriesAverage": pr["자본금세전순이익률"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1012,7 +1012,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "자본금",
                     "values": {
-                    "year2023": pr["자본금세전순이익률"]["데이터분모값"],
+                    "year2024": pr["자본금세전순이익률"]["데이터분모값"],
                     "timeSeriesAverage": pr["자본금세전순이익률"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1026,7 +1026,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "자본금순이익률",
                 "values": {
-                "year2023": pr["자본금순이익률"]["데이터"],
+                "year2024": pr["자본금순이익률"]["데이터"],
                 "timeSeriesAverage": f'{(float(pr["자본금순이익률"]["시계열평균분자"])/float(pr["자본금순이익률"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{pr['자본금순이익률']['업종중위수']}%",
                 "timeSeriesScore": pr["자본금순이익률"]["시계열점수"],
@@ -1036,7 +1036,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "당기순이익",
                     "values": {
-                    "year2023": pr["자본금순이익률"]["데이터분자값"],
+                    "year2024": pr["자본금순이익률"]["데이터분자값"],
                     "timeSeriesAverage": pr["자본금순이익률"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1047,7 +1047,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "자본금",
                     "values": {
-                    "year2023": pr["자본금순이익률"]["데이터분모값"],
+                    "year2024": pr["자본금순이익률"]["데이터분모값"],
                     "timeSeriesAverage": pr["자본금순이익률"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1061,7 +1061,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "자기자본순이익률",
                 "values": {
-                "year2023": pr["자기자본순이익률"]["데이터"],
+                "year2024": pr["자기자본순이익률"]["데이터"],
                 "timeSeriesAverage": f'{(float(pr["자기자본순이익률"]["시계열평균분자"])/float(pr["자기자본순이익률"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{pr['자기자본순이익률']['업종중위수']}%",
                 "timeSeriesScore": pr["자기자본순이익률"]["시계열점수"],
@@ -1071,7 +1071,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "당기순이익",
                     "values": {
-                    "year2023": pr["자기자본순이익률"]["데이터분자값"],
+                    "year2024": pr["자기자본순이익률"]["데이터분자값"],
                     "timeSeriesAverage": pr["자기자본순이익률"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1082,7 +1082,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "자본총계",
                     "values": {
-                    "year2023": pr["자기자본순이익률"]["데이터분모값"],
+                    "year2024": pr["자기자본순이익률"]["데이터분모값"],
                     "timeSeriesAverage": pr["자기자본순이익률"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1294,7 +1294,7 @@ def get_company_financial_analysis_details(ticker:str):
             "title": "",
             "tableHeaders": [
                 { "key": "indicator", "label": "" },
-                { "key": "year2023", "label": "2023" },
+                { "key": "year2024", "label": "2024" },
                 { "key": "timeSeriesAverage", "label": "시계열평균" },
                 { "key": "industryMedian", "label": "업종중위수" },
                 { "key": "timeSeriesScore", "label": "시계열점수" },
@@ -1305,7 +1305,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "총자산증가율",
                 "values": {
-                "year2023": gr["총자산증가율"]["데이터"],
+                "year2024": gr["총자산증가율"]["데이터"],
                 "timeSeriesAverage": f'{(float(gr["총자산증가율"]["시계열평균분자"])/float(gr["총자산증가율"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{gr['총자산증가율']['업종중위수']}%",
                 "timeSeriesScore": gr["총자산증가율"]["시계열점수"],
@@ -1315,7 +1315,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "당기자산총계-전기자산총계",
                     "values": {
-                    "year2023": gr["총자산증가율"]["데이터분자값"],
+                    "year2024": gr["총자산증가율"]["데이터분자값"],
                     "timeSeriesAverage": gr["총자산증가율"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1326,7 +1326,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "전기자산총계",
                     "values": {
-                    "year2023": gr["총자산증가율"]["데이터분모값"],
+                    "year2024": gr["총자산증가율"]["데이터분모값"],
                     "timeSeriesAverage": gr["총자산증가율"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1340,7 +1340,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "유형자산증가율",
                 "values": {
-                "year2023": gr["유형자산증가율"]["데이터"],
+                "year2024": gr["유형자산증가율"]["데이터"],
                 "timeSeriesAverage": f'{(float(gr["유형자산증가율"]["시계열평균분자"])/float(gr["유형자산증가율"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{gr['유형자산증가율']['업종중위수']}%",
                 "timeSeriesScore": gr["유형자산증가율"]["시계열점수"],
@@ -1350,7 +1350,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "당기유형자산-전기유형자산",
                     "values": {
-                    "year2023": gr["유형자산증가율"]["데이터분자값"],
+                    "year2024": gr["유형자산증가율"]["데이터분자값"],
                     "timeSeriesAverage": gr["유형자산증가율"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1361,7 +1361,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "전기유형자산",
                     "values": {
-                    "year2023": gr["유형자산증가율"]["데이터분모값"],
+                    "year2024": gr["유형자산증가율"]["데이터분모값"],
                     "timeSeriesAverage": gr["유형자산증가율"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1375,7 +1375,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "유동자산증가율",
                 "values": {
-                "year2023": gr["유동자산증가율"]["데이터"],
+                "year2024": gr["유동자산증가율"]["데이터"],
                 "timeSeriesAverage": f'{(float(gr["유동자산증가율"]["시계열평균분자"])/float(gr["유동자산증가율"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{gr['유동자산증가율']['업종중위수']}%",
                 "timeSeriesScore": gr["유동자산증가율"]["시계열점수"],
@@ -1385,7 +1385,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "당기유동자산-전기유동자산",
                     "values": {
-                    "year2023": gr["유동자산증가율"]["데이터분자값"],
+                    "year2024": gr["유동자산증가율"]["데이터분자값"],
                     "timeSeriesAverage": gr["유동자산증가율"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1396,7 +1396,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "전기유동자산",
                     "values": {
-                    "year2023": gr["유동자산증가율"]["데이터분모값"],
+                    "year2024": gr["유동자산증가율"]["데이터분모값"],
                     "timeSeriesAverage": gr["유동자산증가율"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1410,7 +1410,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "자기자본증가율",
                 "values": {
-                "year2023": gr["자기자본증가율"]["데이터"],
+                "year2024": gr["자기자본증가율"]["데이터"],
                 "timeSeriesAverage": f'{(float(gr["자기자본증가율"]["시계열평균분자"])/float(gr["자기자본증가율"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{gr['자기자본증가율']['업종중위수']}%",
                 "timeSeriesScore": gr["자기자본증가율"]["시계열점수"],
@@ -1420,7 +1420,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "당기자본총계-전기자본총계",
                     "values": {
-                    "year2023": gr["자기자본증가율"]["데이터분자값"],
+                    "year2024": gr["자기자본증가율"]["데이터분자값"],
                     "timeSeriesAverage": gr["자기자본증가율"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1431,7 +1431,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "전기자본총계",
                     "values": {
-                    "year2023": gr["자기자본증가율"]["데이터분모값"],
+                    "year2024": gr["자기자본증가율"]["데이터분모값"],
                     "timeSeriesAverage": gr["자기자본증가율"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1445,7 +1445,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "매출액증가율",
                 "values": {
-                "year2023": gr["매출액증가율"]["데이터"],
+                "year2024": gr["매출액증가율"]["데이터"],
                 "timeSeriesAverage": f'{(float(gr["매출액증가율"]["시계열평균분자"])/float(gr["매출액증가율"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{gr['매출액증가율']['업종중위수']}%",
                 "timeSeriesScore": gr["매출액증가율"]["시계열점수"],
@@ -1455,7 +1455,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "당기매출액-전기매출액",
                     "values": {
-                    "year2023": gr["매출액증가율"]["데이터분자값"],
+                    "year2024": gr["매출액증가율"]["데이터분자값"],
                     "timeSeriesAverage": gr["매출액증가율"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1466,7 +1466,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "전기매출액",
                     "values": {
-                    "year2023": gr["매출액증가율"]["데이터분모값"],
+                    "year2024": gr["매출액증가율"]["데이터분모값"],
                     "timeSeriesAverage": gr["매출액증가율"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1489,7 +1489,7 @@ def get_company_financial_analysis_details(ticker:str):
             "title": "",
             "tableHeaders": [
                 { "key": "indicator", "label": "" },
-                { "key": "year2023", "label": "2023" },
+                { "key": "year2024", "label": "2024" },
                 { "key": "timeSeriesAverage", "label": "시계열평균" },
                 { "key": "industryMedian", "label": "업종중위수" },
                 { "key": "timeSeriesScore", "label": "시계열점수" },
@@ -1500,7 +1500,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "총자산회전율",
                 "values": {
-                "year2023": at["총자산회전율"]["데이터"],
+                "year2024": at["총자산회전율"]["데이터"],
                 "timeSeriesAverage": f'{(float(at["총자산회전율"]["시계열평균분자"])/float(at["총자산회전율"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{at['총자산회전율']['업종중위수']}%",
                 "timeSeriesScore": at["총자산회전율"]["시계열점수"],
@@ -1510,7 +1510,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "매출액",
                     "values": {
-                    "year2023": at["총자산회전율"]["데이터분자값"],
+                    "year2024": at["총자산회전율"]["데이터분자값"],
                     "timeSeriesAverage": at["총자산회전율"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1521,7 +1521,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "자산총계",
                     "values": {
-                    "year2023": at["총자산회전율"]["데이터분모값"],
+                    "year2024": at["총자산회전율"]["데이터분모값"],
                     "timeSeriesAverage": at["총자산회전율"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1535,7 +1535,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "자기자본회전율",
                 "values": {
-                "year2023": at["자기자본회전율"]["데이터"],
+                "year2024": at["자기자본회전율"]["데이터"],
                 "timeSeriesAverage": f'{(float(at["자기자본회전율"]["시계열평균분자"])/float(at["자기자본회전율"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{at['자기자본회전율']['업종중위수']}%",
                 "timeSeriesScore": at["자기자본회전율"]["시계열점수"],
@@ -1545,7 +1545,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "매출액",
                     "values": {
-                    "year2023": at["자기자본회전율"]["데이터분자값"],
+                    "year2024": at["자기자본회전율"]["데이터분자값"],
                     "timeSeriesAverage": at["자기자본회전율"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1556,7 +1556,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "자본총계",
                     "values": {
-                    "year2023": at["자기자본회전율"]["데이터분모값"],
+                    "year2024": at["자기자본회전율"]["데이터분모값"],
                     "timeSeriesAverage": at["자기자본회전율"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1570,7 +1570,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "자본금회전율",
                 "values": {
-                "year2023": at["자본금회전율"]["데이터"],
+                "year2024": at["자본금회전율"]["데이터"],
                 "timeSeriesAverage": f'{(float(at["자본금회전율"]["시계열평균분자"])/float(at["자본금회전율"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{at['자본금회전율']['업종중위수']}%",
                 "timeSeriesScore": at["자본금회전율"]["시계열점수"],
@@ -1580,7 +1580,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "매출액",
                     "values": {
-                    "year2023": at["자본금회전율"]["데이터분자값"],
+                    "year2024": at["자본금회전율"]["데이터분자값"],
                     "timeSeriesAverage": at["자본금회전율"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1591,7 +1591,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "자본금",
                     "values": {
-                    "year2023": at["자본금회전율"]["데이터분모값"],
+                    "year2024": at["자본금회전율"]["데이터분모값"],
                     "timeSeriesAverage": at["자본금회전율"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1605,7 +1605,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "경영자산회전율",
                 "values": {
-                "year2023": at["경영자산회전율"]["데이터"],
+                "year2024": at["경영자산회전율"]["데이터"],
                 "timeSeriesAverage": f'{(float(at["경영자산회전율"]["시계열평균분자"])/float(at["경영자산회전율"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{at['경영자산회전율']['업종중위수']}%",
                 "timeSeriesScore": at["경영자산회전율"]["시계열점수"],
@@ -1615,7 +1615,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "매출액",
                     "values": {
-                    "year2023": at["경영자산회전율"]["데이터분자값"],
+                    "year2024": at["경영자산회전율"]["데이터분자값"],
                     "timeSeriesAverage": at["경영자산회전율"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1626,7 +1626,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "경영자산",
                     "values": {
-                    "year2023": at["경영자산회전율"]["데이터분모값"],
+                    "year2024": at["경영자산회전율"]["데이터분모값"],
                     "timeSeriesAverage": at["경영자산회전율"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1640,7 +1640,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "비유동자산회전율",
                 "values": {
-                "year2023": at["비유동자산회전율"]["데이터"],
+                "year2024": at["비유동자산회전율"]["데이터"],
                 "timeSeriesAverage": f'{(float(at["비유동자산회전율"]["시계열평균분자"])/float(at["비유동자산회전율"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{at['비유동자산회전율']['업종중위수']}%",
                 "timeSeriesScore": at["비유동자산회전율"]["시계열점수"],
@@ -1650,7 +1650,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "매출액",
                     "values": {
-                    "year2023": at["비유동자산회전율"]["데이터분자값"],
+                    "year2024": at["비유동자산회전율"]["데이터분자값"],
                     "timeSeriesAverage": at["비유동자산회전율"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1661,7 +1661,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "비유동자산",
                     "values": {
-                    "year2023": at["비유동자산회전율"]["데이터분모값"],
+                    "year2024": at["비유동자산회전율"]["데이터분모값"],
                     "timeSeriesAverage": at["비유동자산회전율"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1675,7 +1675,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "유형자산회전율",
                 "values": {
-                "year2023": at["유형자산회전율"]["데이터"],
+                "year2024": at["유형자산회전율"]["데이터"],
                 "timeSeriesAverage": f'{(float(at["유형자산회전율"]["시계열평균분자"])/float(at["유형자산회전율"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{at['유형자산회전율']['업종중위수']}%",
                 "timeSeriesScore": at["유형자산회전율"]["시계열점수"],
@@ -1685,7 +1685,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "매출액",
                     "values": {
-                    "year2023": at["유형자산회전율"]["데이터분자값"],
+                    "year2024": at["유형자산회전율"]["데이터분자값"],
                     "timeSeriesAverage": at["유형자산회전율"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1696,7 +1696,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "유형자산",
                     "values": {
-                    "year2023": at["유형자산회전율"]["데이터분모값"],
+                    "year2024": at["유형자산회전율"]["데이터분모값"],
                     "timeSeriesAverage": at["유형자산회전율"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1710,7 +1710,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "재고자산회전율",
                 "values": {
-                "year2023": at["재고자산회전율"]["데이터"],
+                "year2024": at["재고자산회전율"]["데이터"],
                 "timeSeriesAverage": f'{(float(at["재고자산회전율"]["시계열평균분자"])/float(at["재고자산회전율"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{at['재고자산회전율']['업종중위수']}%",
                 "timeSeriesScore": at["재고자산회전율"]["시계열점수"],
@@ -1720,7 +1720,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "매출액",
                     "values": {
-                    "year2023": at["재고자산회전율"]["데이터분자값"],
+                    "year2024": at["재고자산회전율"]["데이터분자값"],
                     "timeSeriesAverage": at["재고자산회전율"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1731,7 +1731,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "재고자산",
                     "values": {
-                    "year2023": at["재고자산회전율"]["데이터분모값"],
+                    "year2024": at["재고자산회전율"]["데이터분모값"],
                     "timeSeriesAverage": at["재고자산회전율"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1745,7 +1745,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "상(제)품회전율",
                 "values": {
-                "year2023": at["상(제)품회전율"]["데이터"],
+                "year2024": at["상(제)품회전율"]["데이터"],
                 "timeSeriesAverage": f'{(float(at["상(제)품회전율"]["시계열평균분자"])/float(at["상(제)품회전율"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{at['상(제)품회전율']['업종중위수']}%",
                 "timeSeriesScore": at["상(제)품회전율"]["시계열점수"],
@@ -1755,7 +1755,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "매출액",
                     "values": {
-                    "year2023": at["상(제)품회전율"]["데이터분자값"],
+                    "year2024": at["상(제)품회전율"]["데이터분자값"],
                     "timeSeriesAverage": at["상(제)품회전율"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1766,7 +1766,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "상품+제품",
                     "values": {
-                    "year2023": at["상(제)품회전율"]["데이터분모값"],
+                    "year2024": at["상(제)품회전율"]["데이터분모값"],
                     "timeSeriesAverage": at["상(제)품회전율"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1780,7 +1780,7 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "매출채권회전율",
                 "values": {
-                "year2023": at["매출채권회전율"]["데이터"],
+                "year2024": at["매출채권회전율"]["데이터"],
                 "timeSeriesAverage": f'{(float(at["매출채권회전율"]["시계열평균분자"])/float(at["매출채권회전율"]["시계열평균분모"]))/100}%',
                 "industryMedian": f"{at['매출채권회전율']['업종중위수']}%",
                 "timeSeriesScore": at["매출채권회전율"]["시계열점수"],
@@ -1790,7 +1790,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "매출액",
                     "values": {
-                    "year2023": at["매출채권회전율"]["데이터분자값"],
+                    "year2024": at["매출채권회전율"]["데이터분자값"],
                     "timeSeriesAverage": at["매출채권회전율"]["시계열평균분자"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
@@ -1801,7 +1801,7 @@ def get_company_financial_analysis_details(ticker:str):
                 {
                     "name": "매출채권",
                     "values": {
-                    "year2023": at["매출채권회전율"]["데이터분모값"],
+                    "year2024": at["매출채권회전율"]["데이터분모값"],
                     "timeSeriesAverage": at["매출채권회전율"]["시계열평균분모"],
                     "industryMedian": "-",
                     "timeSeriesScore": "-",
