@@ -1,6 +1,6 @@
 import asyncio
 import uuid,json
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from program_tool import *
 from ai.ai_chatting_queue_controller import *
@@ -114,14 +114,20 @@ async def delete_prev_qna_session(req:ClientRequest):
 #=================
 
 def get_company_data(ticker):
-        with open(f'data/{ticker}.json', 'r', encoding='utf-8') as f:
-            cdict = json.load(f)
-        return cdict
+        try:
+            with open(f'data/{ticker}.json', 'r', encoding='utf-8') as f:
+                cdict = json.load(f)
+            return cdict
+        except FileNotFoundError:
+            return None
 
 @app.get('/companies/{ticker}/profile')
 def get_company_profile(ticker:str):
-    item_names = {"시가총액":"시가총액","상장일자":"상장일자","설립일자":"설립일","종업원수":"종업원수","대표 이사":"CEO","발행주식수":"발행주식수","주요 계열사/관계사":"주요계열사"}
     data = get_company_data(ticker)
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"Company data not found for ticker: {ticker}")
+
+    item_names = {"시가총액":"시가총액","상장일자":"상장일자","설립일자":"설립일","종업원수":"종업원수","대표 이사":"CEO","발행주식수":"발행주식수","주요 계열사/관계사":"주요계열사"}
     profile = data["리포트오버뷰"]["기업프로필"]
     profile_list = []
     for k, v in item_names.items():
@@ -136,41 +142,120 @@ def get_company_profile(ticker:str):
     }
     return response
 
+@app.get('/companies/{ticker}/sales-composition')
+def get_company_sales_composition(ticker:str):
+    data = get_company_data(ticker)
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"Company data not found for ticker: {ticker}")
+
+    sales_comp = data["리포트오버뷰"].get("매출산업구성", {})
+
+    # 색상 팔레트
+    colors = ["#5797F7", "#FFA353", "#8DD3BB", "#FFD666", "#A78BFA", "#FB7185"]
+
+    items = []
+    for idx, (name, value) in enumerate(sales_comp.items()):
+        items.append({
+            "name": name,
+            "value": abs(float(value)),
+            "percentage": f"{value}%" if value >= 0 else f"-{abs(value)}%",
+            "color": colors[idx % len(colors)]
+        })
+
+    # 총 매출액 계산
+    financial_data = data["리포트오버뷰"].get("재무현황", {})
+    latest_year = max(financial_data.keys()) if financial_data else "2024"
+    total_revenue = financial_data.get(latest_year, {}).get("매출액", "0")
+
+    response = {
+        "totalRevenue": total_revenue,
+        "totalRevenueRaw": 0,  # TODO: 실제 숫자값으로 변환 필요
+        "items": items
+    }
+    return response
+
+def parse_korean_number(text):
+    """한국어 숫자 표현을 숫자로 변환 (예: '29.36조' -> 29360000000000)"""
+    import re
+    if not text or text == "0":
+        return 0
+
+    text = str(text).replace(",", "").replace(" ", "")
+
+    # 조, 억, 만 단위 처리
+    multipliers = {"조": 1000000000000, "억": 100000000, "만": 10000}
+
+    total = 0
+    for unit, multiplier in multipliers.items():
+        if unit in text:
+            parts = text.split(unit)
+            try:
+                num = float(parts[0])
+                total += num * multiplier
+                text = parts[1] if len(parts) > 1 else ""
+            except:
+                pass
+
+    # 남은 숫자 처리
+    try:
+        if text:
+            total += float(text)
+    except:
+        pass
+
+    return int(total)
+
 @app.get('/companies/{ticker}/financial-overview')
 def get_company_financial_overview(ticker:str):
-
     data = get_company_data(ticker)
-    dt = data["리포트재무현황분석"]["재무상황"]["num"]
-    response = {"revenueChart":[],"netIncomeChar":[],"financialTable":[]}
-    for year,values in dt:
-        temp = {}
-        temp["year"] = year 
-        temp["value"] = values["매출액"]
-        response["revenueChart"].append(temp)
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"Company data not found for ticker: {ticker}")
 
-        operating_income = values["당기순이익"] / values["매출액"]
-        temp["netIncome"] = values["당기순이익"]
-        temp["netIncomeRate"] = operating_income
+    financial_data = data["리포트오버뷰"]["재무현황"]
+    response = {"revenueChart":[],"netIncomeChart":[],"financialTable":[]}
 
-        response["netIncomeChar"].append(temp)
+    # 연도별로 정렬
+    for year in sorted(financial_data.keys()):
+        values = financial_data[year]
 
-        fdict = {
-            "year":year,
-            "revenue":values["매출액"],
-            "totalAssets":values["자산총계"],
-            "totalLiabilities": values["부채총계"],
-            "totalEquity": values["자본총계"],
-            "operatingIncome": operating_income,
-            "netIncome": values["당기순이익"]
-        }
-        response["financialTable"].append(fdict)
+        # 매출액 차트 데이터
+        revenue_str = values.get("매출액", "0")
+        revenue_value = parse_korean_number(revenue_str)
+        response["revenueChart"].append({
+            "year": year,
+            "value": revenue_value
+        })
+
+        # 순이익 차트 데이터
+        net_income_str = values.get("당기순이익", "0")
+        net_income_value = parse_korean_number(net_income_str)
+        net_income_rate = (net_income_value / revenue_value * 100) if revenue_value > 0 else 0
+
+        response["netIncomeChart"].append({
+            "year": year,
+            "netIncome": net_income_value,
+            "netIncomeRate": round(net_income_rate, 1)
+        })
+
+        # 재무 테이블 데이터
+        response["financialTable"].append({
+            "year": year,
+            "revenue": revenue_value,
+            "totalAssets": parse_korean_number(values.get("자산총계", "0")),
+            "totalLiabilities": parse_korean_number(values.get("부채총계", "0")),
+            "totalEquity": parse_korean_number(values.get("자본총계", "0")),
+            "operatingIncome": 0,  # TODO: 영업이익 데이터 없음
+            "netIncome": net_income_value
+        })
+
     return response
 
 @app.get('/companies/{ticker}/financial-health')
 def get_company_financial_health(ticker:str):
-    
     data = get_company_data(ticker)
-    dt = data["리포트재무현황분석"]["재무상황"]["재무비율판정"]
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"Company data not found for ticker: {ticker}")
+    dt = data["리포트재무현황분석"]["재무비율판정"]
     judge = dt["지표판정"]
     response = {
         "description": "재무건전성은 필수소비재 섹터 업종 중위수와 시계열 점수로 판정됩니다",
@@ -193,8 +278,9 @@ def get_company_financial_health(ticker:str):
 
 @app.get('/companies/{ticker}/industry-description')
 def get_company_industry_description(ticker:str):
-    
     data = get_company_data(ticker)
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"Company data not found for ticker: {ticker}")
     dt = data["리포트오버뷰"]["산업설명"]
     response = {
         "items": [
@@ -208,12 +294,14 @@ def get_company_industry_description(ticker:str):
 @app.get('/companies/{ticker}/financial-ratio-judgment')
 def get_company_financial_ratio_judgment(ticker:str):
     data = get_company_data(ticker)
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"Company data not found for ticker: {ticker}")
     dt = data["리포트재무현황분석"]["재무비율판정"]
     judge = dt["지표판정"]
     point = dt["지표점수"]
     response = {
         "financialHealth": {
-            "scoreValue": 0.855,
+            "scoreValue": float(dt["점수"]),
             "scoreRange": {
             "min": -1,
             "max": 1,
@@ -246,6 +334,8 @@ def get_company_financial_ratio_judgment(ticker:str):
 @app.get('/companies/{ticker}/financial-analysis-details')
 def get_company_financial_analysis_details(ticker:str):
     data = get_company_data(ticker)
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"Company data not found for ticker: {ticker}")
     st = data["리포트재무현황분석"]["유동성분석"]
     lv = data["리포트재무현황분석"]["레버리지분석"]
     pr = data["리포트재무현황분석"]["투자수익성분석"]
@@ -1021,32 +1111,32 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "매출액세전순이익률",
                 "values": {
-                "year2023": mg["매출액세전순이익률"]["데이터"],
-                "timeSeriesAverage": f'{(float(mg["매출액세전순이익률"]["시계열평균분자"])/float(mg["매출액세전순이익률"]["시계열평균분모"]))/100}%',
-                "industryMedian": f"{mg['매출액세전순이익률']['업종중위수']}%",
-                "timeSeriesScore": mg["매출액세전순이익률"]["시계열점수"],
-                "industryScore": mg["매출액세전순이익률"]["업종점수"]
+                "year2024": mg["매출액세전순이익률"]["데이터"],
+                "avg5Years": f'{(float(mg["매출액세전순이익률"]["시계열평균분자"])/float(mg["매출액세전순이익률"]["시계열평균분모"]))/100}%',
+                "sectorMedian": f"{mg['매출액세전순이익률']['업종중위수']}%",
+                "scoreA": mg["매출액세전순이익률"]["시계열점수"],
+                "scoreB": mg["매출액세전순이익률"]["업종점수"]
                 },
                 "children": [
                 {
                     "name": "법인세비용차감전순이익",
                     "values": {
-                    "year2023": mg["매출액세전순이익률"]["데이터분자값"],
-                    "timeSeriesAverage": mg["매출액세전순이익률"]["시계열평균분자"],
-                    "industryMedian": "-",
-                    "timeSeriesScore": "-",
-                    "industryScore": "-"
+                    "year2024": mg["매출액세전순이익률"]["데이터분자값"],
+                    "avg5Years": mg["매출액세전순이익률"]["시계열평균분자"],
+                    "sectorMedian": "-",
+                    "scoreA": "-",
+                    "scoreB": "-"
                     },
                     "children": []
                 },
                 {
                     "name": "매출액",
                     "values": {
-                    "year2023": mg["매출액세전순이익률"]["데이터분모값"],
-                    "timeSeriesAverage": mg["매출액세전순이익률"]["시계열평균분모"],
-                    "industryMedian": "-",
-                    "timeSeriesScore": "-",
-                    "industryScore": "-"
+                    "year2024": mg["매출액세전순이익률"]["데이터분모값"],
+                    "avg5Years": mg["매출액세전순이익률"]["시계열평균분모"],
+                    "sectorMedian": "-",
+                    "scoreA": "-",
+                    "scoreB": "-"
                     },
                     "children": []
                 }
@@ -1056,32 +1146,32 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "매출액순이익률",
                 "values": {
-                "year2023": mg["매출액순이익률"]["데이터"],
-                "timeSeriesAverage": f'{(float(mg["매출액순이익률"]["시계열평균분자"])/float(mg["매출액순이익률"]["시계열평균분모"]))/100}%',
-                "industryMedian": f"{mg['매출액순이익률']['업종중위수']}%",
-                "timeSeriesScore": mg["매출액순이익률"]["시계열점수"],
-                "industryScore": mg["매출액순이익률"]["업종점수"]
+                "year2024": mg["매출액순이익률"]["데이터"],
+                "avg5Years": f'{(float(mg["매출액순이익률"]["시계열평균분자"])/float(mg["매출액순이익률"]["시계열평균분모"]))/100}%',
+                "sectorMedian": f"{mg['매출액순이익률']['업종중위수']}%",
+                "scoreA": mg["매출액순이익률"]["시계열점수"],
+                "scoreB": mg["매출액순이익률"]["업종점수"]
                 },
                 "children": [
                 {
                     "name": "당기순이익",
                     "values": {
-                    "year2023": mg["매출액순이익률"]["데이터분자값"],
-                    "timeSeriesAverage": mg["매출액순이익률"]["시계열평균분자"],
-                    "industryMedian": "-",
-                    "timeSeriesScore": "-",
-                    "industryScore": "-"
+                    "year2024": mg["매출액순이익률"]["데이터분자값"],
+                    "avg5Years": mg["매출액순이익률"]["시계열평균분자"],
+                    "sectorMedian": "-",
+                    "scoreA": "-",
+                    "scoreB": "-"
                     },
                     "children": []
                 },
                 {
                     "name": "매출액",
                     "values": {
-                    "year2023": mg["매출액순이익률"]["데이터분모값"],
-                    "timeSeriesAverage": mg["매출액순이익률"]["시계열평균분모"],
-                    "industryMedian": "-",
-                    "timeSeriesScore": "-",
-                    "industryScore": "-"
+                    "year2024": mg["매출액순이익률"]["데이터분모값"],
+                    "avg5Years": mg["매출액순이익률"]["시계열평균분모"],
+                    "sectorMedian": "-",
+                    "scoreA": "-",
+                    "scoreB": "-"
                     },
                     "children": []
                 }
@@ -1091,32 +1181,32 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "매출액영업이익률",
                 "values": {
-                "year2023": mg["매출액영업이익률"]["데이터"],
-                "timeSeriesAverage": f'{(float(mg["매출액영업이익률"]["시계열평균분자"])/float(mg["매출액영업이익률"]["시계열평균분모"]))/100}%',
-                "industryMedian": f"{mg['매출액영업이익률']['업종중위수']}%",
-                "timeSeriesScore": mg["매출액영업이익률"]["시계열점수"],
-                "industryScore": mg["매출액영업이익률"]["업종점수"]
+                "year2024": mg["매출액영업이익률"]["데이터"],
+                "avg5Years": f'{(float(mg["매출액영업이익률"]["시계열평균분자"])/float(mg["매출액영업이익률"]["시계열평균분모"]))/100}%',
+                "sectorMedian": f"{mg['매출액영업이익률']['업종중위수']}%",
+                "scoreA": mg["매출액영업이익률"]["시계열점수"],
+                "scoreB": mg["매출액영업이익률"]["업종점수"]
                 },
                 "children": [
                 {
                     "name": "영업이익",
                     "values": {
-                    "year2023": mg["매출액영업이익률"]["데이터분자값"],
-                    "timeSeriesAverage": mg["매출액영업이익률"]["시계열평균분자"],
-                    "industryMedian": "-",
-                    "timeSeriesScore": "-",
-                    "industryScore": "-"
+                    "year2024": mg["매출액영업이익률"]["데이터분자값"],
+                    "avg5Years": mg["매출액영업이익률"]["시계열평균분자"],
+                    "sectorMedian": "-",
+                    "scoreA": "-",
+                    "scoreB": "-"
                     },
                     "children": []
                 },
                 {
                     "name": "매출액",
                     "values": {
-                    "year2023": mg["매출액영업이익률"]["데이터분모값"],
-                    "timeSeriesAverage": mg["매출액영업이익률"]["시계열평균분모"],
-                    "industryMedian": "-",
-                    "timeSeriesScore": "-",
-                    "industryScore": "-"
+                    "year2024": mg["매출액영업이익률"]["데이터분모값"],
+                    "avg5Years": mg["매출액영업이익률"]["시계열평균분모"],
+                    "sectorMedian": "-",
+                    "scoreA": "-",
+                    "scoreB": "-"
                     },
                     "children": []
                 }
@@ -1126,32 +1216,32 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "EBIT대매출액",
                 "values": {
-                "year2023": mg["EBIT대매출액"]["데이터"],
-                "timeSeriesAverage": f'{(float(mg["EBIT대매출액"]["시계열평균분자"])/float(mg["EBIT대매출액"]["시계열평균분모"]))/100}%',
-                "industryMedian": f"{mg['EBIT대매출액']['업종중위수']}%",
-                "timeSeriesScore": mg["EBIT대매출액"]["시계열점수"],
-                "industryScore": mg["EBIT대매출액"]["업종점수"]
+                "year2024": mg["EBIT대매출액"]["데이터"],
+                "avg5Years": f'{(float(mg["EBIT대매출액"]["시계열평균분자"])/float(mg["EBIT대매출액"]["시계열평균분모"]))/100}%',
+                "sectorMedian": f"{mg['EBIT대매출액']['업종중위수']}%",
+                "scoreA": mg["EBIT대매출액"]["시계열점수"],
+                "scoreB": mg["EBIT대매출액"]["업종점수"]
                 },
                 "children": [
                 {
                     "name": "법인세비용차감전순이익+이자비용",
                     "values": {
-                    "year2023": mg["EBIT대매출액"]["데이터분자값"],
-                    "timeSeriesAverage": mg["EBIT대매출액"]["시계열평균분자"],
-                    "industryMedian": "-",
-                    "timeSeriesScore": "-",
-                    "industryScore": "-"
+                    "year2024": mg["EBIT대매출액"]["데이터분자값"],
+                    "avg5Years": mg["EBIT대매출액"]["시계열평균분자"],
+                    "sectorMedian": "-",
+                    "scoreA": "-",
+                    "scoreB": "-"
                     },
                     "children": []
                 },
                 {
                     "name": "매출액",
                     "values": {
-                    "year2023": mg["EBIT대매출액"]["데이터분모값"],
-                    "timeSeriesAverage": mg["EBIT대매출액"]["시계열평균분모"],
-                    "industryMedian": "-",
-                    "timeSeriesScore": "-",
-                    "industryScore": "-"
+                    "year2024": mg["EBIT대매출액"]["데이터분모값"],
+                    "avg5Years": mg["EBIT대매출액"]["시계열평균분모"],
+                    "sectorMedian": "-",
+                    "scoreA": "-",
+                    "scoreB": "-"
                     },
                     "children": []
                 }
@@ -1161,32 +1251,32 @@ def get_company_financial_analysis_details(ticker:str):
             {
                 "name": "EBITDA대매출액",
                 "values": {
-                "year2023": mg["EBITDA대매출액"]["데이터"],
-                "timeSeriesAverage": f'{(float(mg["EBITDA대매출액"]["시계열평균분자"])/float(mg["EBITDA대매출액"]["시계열평균분모"]))/100}%',
-                "industryMedian": f"{mg['EBITDA대매출액']['업종중위수']}%",
-                "timeSeriesScore": mg["EBITDA대매출액"]["시계열점수"],
-                "industryScore": mg["EBITDA대매출액"]["업종점수"]
+                "year2024": mg["EBITDA대매출액"]["데이터"],
+                "avg5Years": f'{(float(mg["EBITDA대매출액"]["시계열평균분자"])/float(mg["EBITDA대매출액"]["시계열평균분모"]))/100}%',
+                "sectorMedian": f"{mg['EBITDA대매출액']['업종중위수']}%",
+                "scoreA": mg["EBITDA대매출액"]["시계열점수"],
+                "scoreB": mg["EBITDA대매출액"]["업종점수"]
                 },
                 "children": [
                 {
                     "name": "법인세비용차감전순이익+이자비용+감가상각비+무형자산상각비",
                     "values": {
-                    "year2023": mg["EBITDA대매출액"]["데이터분자값"],
-                    "timeSeriesAverage": mg["EBITDA대매출액"]["시계열평균분자"],
-                    "industryMedian": "-",
-                    "timeSeriesScore": "-",
-                    "industryScore": "-"
+                    "year2024": mg["EBITDA대매출액"]["데이터분자값"],
+                    "avg5Years": mg["EBITDA대매출액"]["시계열평균분자"],
+                    "sectorMedian": "-",
+                    "scoreA": "-",
+                    "scoreB": "-"
                     },
                     "children": []
                 },
                 {
                     "name": "매출액",
                     "values": {
-                    "year2023": mg["EBITDA대매출액"]["데이터분모값"],
-                    "timeSeriesAverage": mg["EBITDA대매출액"]["시계열평균분모"],
-                    "industryMedian": "-",
-                    "timeSeriesScore": "-",
-                    "industryScore": "-"
+                    "year2024": mg["EBITDA대매출액"]["데이터분모값"],
+                    "avg5Years": mg["EBITDA대매출액"]["시계열평균분모"],
+                    "sectorMedian": "-",
+                    "scoreA": "-",
+                    "scoreB": "-"
                     },
                     "children": []
                 }
@@ -1406,7 +1496,7 @@ def get_company_financial_analysis_details(ticker:str):
                 { "key": "timeSeriesScore", "label": "시계열점수" },
                 { "key": "industryScore", "label": "업종점수" }
             ],
-            "items": 
+            "items":
             [
             {
                 "name": "총자산회전율",
@@ -1729,8 +1819,6 @@ def get_company_financial_analysis_details(ticker:str):
         }
     ]
     }
-    
-    
-    return response
-    
 
+
+    return response
