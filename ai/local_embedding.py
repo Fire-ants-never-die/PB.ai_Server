@@ -1,10 +1,7 @@
 from chromadb.utils import embedding_functions
 from program_tool import *
 import pandas as pd
-# from chunking import *
-
 from ai.chunking import *
-
 import chromadb
 from chromadb.config import Settings
 import json
