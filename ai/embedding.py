@@ -45,8 +45,8 @@ class Embedding:
             context = "\n".join(results["documents"][0]) # type: ignore
 
             return "\n검색된 데이터:\n" + context
-        except:
-            Debuger.printc("RAG구성 실패")
+        except Exception as e:
+            Debuger.printc(f"RAG구성 실패 {e}")
             return "검색된 데이터는 없습니다."
 
     #Deprecated (위의 메서드 get_context로 일단 대신합니다.)

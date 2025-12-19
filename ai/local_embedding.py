@@ -15,8 +15,7 @@ class LocalChromaDB:
         self.client = OpenAI(api_key="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")
         self.model= "text-embedding-3-large"
         
-    def make_db(self):
-        tickers = ["097950"]
+    def make_db(self,tickers):
         for ticker in tickers:
             path1 = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
             path = os.path.join(path1,f"data/{ticker}.json")
@@ -30,7 +29,9 @@ class LocalChromaDB:
                 vec = res.data[0].embedding # type: ignore
                 vector.append(vec)
 
-
+            db_path = os.path.abspath(os.path.dirname(__file__))
+            db_path = os.path.join(db_path,"/chroma_db")
+            Debuger.printc(db_path)
             client = chromadb.PersistentClient(path="./chroma_db")
         
             collection = client.get_or_create_collection(name=f"{ticker}_report")
@@ -43,9 +44,18 @@ class LocalChromaDB:
 
 
     def get_db(self,ticker):
-        client = chromadb.PersistentClient(path='./chroma_db')
+        path1 = os.path.abspath(os.path.dirname(__file__))
+        Debuger.printc(path1)
+        db_path = os.path.join(path1,"chroma_db")
+        Debuger.printc(db_path)
+        client = chromadb.PersistentClient(db_path)
         collection = client.get_collection(name=f"{ticker}_report")
 
         return collection
 
 
+if __name__ == "__main__":
+    tickers = ["004370","097950"]
+    db = LocalChromaDB()
+    db.make_db(tickers)
+    

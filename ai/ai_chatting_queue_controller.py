@@ -122,7 +122,7 @@ class ServerQueueData:
 
             #context data 확인용
             self.context = ""
-        self.name_to_ticker = {"농심":"","CJ제일제당":"097950"}
+        self.name_to_ticker = {"농심":"004370","CJ제일제당":"097950"}
     
     #큐에 인스턴스가 들어가고 우선순위가 같을때 우선권을 비교결정 하기 위한 메서드입니다.
     def __lt__(self,other):
