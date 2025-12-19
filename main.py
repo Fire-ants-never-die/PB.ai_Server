@@ -1011,8 +1011,8 @@ def get_company_financial_analysis_details(ticker:str):
             "tableHeaders": [
                 { "key": "indicator", "label": "" },
                 { "key": "year2024", "label": "2024" },
-                { "key": "avg5Years", "label": "5개년 평균" },
-                { "key": "sectorMedian", "label": "섹터중위수" },
+                { "key": "avg5Years", "label": "시계열평균" },
+                { "key": "sectorMedian", "label": "업종중위수" },
                 { "key": "timeSeriesScore", "label": "시계열점수" },
                 { "key": "industryScore", "label": "업종점수" }
             ],
