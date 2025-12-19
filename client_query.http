@@ -7,9 +7,9 @@ Content-Type: application/json
 
 {
     "user_id":"jinu123",
-    "question":"안녕!",
+    "question":"수익성도?",
     "tab_name":"리포트버뷰",
-    "company_name":"CJ제일제당"
+    "company_name":"농심"
 }
 
 ###

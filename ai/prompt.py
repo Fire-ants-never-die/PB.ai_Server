@@ -14,11 +14,14 @@ class GPT:
         data_controller = DataController()
         __api_key = data_controller.get_env("GPT_API_KEY")
 
+        rules = [
+        "마크다운 문법을 사용해줘","제목과 소제목 명확히 구분해줘"
+        "중요한 부분은 **굵게 강조**해줘"
+        ]
+        self.system_content = "재무데이터를 잘 설명해주는 도우미야. 다음규칙에 따라 답변을 해줘"
+        for i in rules:
+            self.system_content += f"그리고 {i}"
         
-        self.system_content = "재무데이터를 잘 설명해주는 도우미야"
-
-        
-
         try:
             self.client = AsyncOpenAI(api_key=__api_key)
         except:
